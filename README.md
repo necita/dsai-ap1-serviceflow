@@ -51,6 +51,21 @@ createdb serviceflow_dev
 
 Em seguida, ajuste o valor de `DATABASE_URL` no arquivo de ambiente local para refletir a porta, usuário e nome do banco em uso.
 
+## Prisma
+
+O projeto usa Prisma para gerenciar a integração com PostgreSQL. A configuração inicial inclui o datasource PostgreSQL e o cliente gerado pelo Prisma.
+
+Comandos de manutenção:
+
+```bash
+npx prisma validate
+npx prisma generate
+npx prisma migrate dev
+npx prisma migrate deploy
+```
+
+O Prisma Client fica em um módulo server-side dedicado e não deve ser importado diretamente por componentes cliente.
+
 ## Verificações
 
 ```bash

@@ -1,0 +1,12 @@
+// Prisma schema for ServiceFlow.
+// The initial configuration establishes datasource and client generation only.
+// Domain models will be added in later SF tasks, in alignment with the approved SPEC.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
