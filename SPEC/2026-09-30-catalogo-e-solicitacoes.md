@@ -1,7 +1,7 @@
 # SPEC — Catálogo configurável e ciclo básico de solicitações
 
 **Data:** 2026-09-30  
-**Status:** Proposta para aprovação  
+**Status:** Aprovada  
 **Projeto:** ServiceFlow  
 **Referência:** `SPEC/2026-09-30-visao-geral.md`
 
