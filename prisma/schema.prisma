@@ -1,7 +1,3 @@
-// Prisma schema for ServiceFlow.
-// The initial configuration establishes datasource and client generation only.
-// Domain models will be added in later SF tasks, in alignment with the approved SPEC.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,4 +5,103 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  REQUESTER
+  ATTENDANT
+}
+
+enum RequestStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Sector {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.Citext
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  users    User[]
+  services Service[]
+  requests Request[]
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.Citext
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  services Service[]
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique @db.Citext
+  role         Role
+  sectorId     String?  @db.Uuid
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @updatedAt @db.Timestamptz
+
+  sector                      Sector?                 @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  requests                    Request[]              @relation("UserRequests")
+  requestStatusEvents         RequestStatusEvent[]   @relation("RequestStatusEventActor")
+}
+
+model Service {
+  id                   String   @id @default(uuid()) @db.Uuid
+  name                 String
+  description          String
+  categoryId           String   @db.Uuid
+  sectorId             String   @db.Uuid
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now()) @db.Timestamptz
+  updatedAt            DateTime @updatedAt @db.Timestamptz
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sector   Sector   @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  requests Request[]
+}
+
+model Request {
+  id                     String        @id @default(uuid()) @db.Uuid
+  requesterId            String        @db.Uuid
+  serviceId              String        @db.Uuid
+  sectorId               String        @db.Uuid
+  serviceNameSnapshot    String
+  serviceDescriptionSnapshot String
+  categoryIdSnapshot     String        @db.Uuid
+  categoryNameSnapshot   String
+  sectorNameSnapshot     String
+  description            String
+  status                 RequestStatus @default(OPEN)
+  createdAt              DateTime      @default(now()) @db.Timestamptz
+  updatedAt              DateTime      @updatedAt @db.Timestamptz
+  completedAt            DateTime?     @db.Timestamptz
+
+  requester  User                @relation("UserRequests", fields: [requesterId], references: [id], onDelete: Restrict)
+  service    Service             @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  sector     Sector              @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  events     RequestStatusEvent[]
+}
+
+model RequestStatusEvent {
+  id          String        @id @default(uuid()) @db.Uuid
+  requestId   String        @db.Uuid
+  actorId     String        @db.Uuid
+  fromStatus  RequestStatus?
+  toStatus    RequestStatus
+  occurredAt  DateTime      @default(now()) @db.Timestamptz
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  actor   User    @relation("RequestStatusEventActor", fields: [actorId], references: [id], onDelete: Restrict)
 }
