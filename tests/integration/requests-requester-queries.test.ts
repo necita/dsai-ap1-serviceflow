@@ -36,10 +36,13 @@ describe("requester request queries", () => {
   it("lists only the current requester's requests with snapshots and chronological history", async () => {
     const requester = await createDomainUser({ role: "REQUESTER" });
     const otherRequester = await createDomainUser({ role: "REQUESTER" });
-    const attendant = await createDomainUser({ role: "ATTENDANT" });
+    const sector = await createDomainSector();
+    const attendant = await createDomainUser({
+      role: "ATTENDANT",
+      sectorId: sector.id,
+    });
     authenticated.requireCurrentActor.mockResolvedValue(requester);
     const category = await createDomainCategory();
-    const sector = await createDomainSector();
     const service = await createDomainService({
       categoryId: category.id,
       sectorId: sector.id,

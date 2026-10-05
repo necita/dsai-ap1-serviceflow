@@ -268,6 +268,7 @@
 
 ### SF-026 — Verificar meta de código da AP1 com cloc
 
+- **Andamento (2026-10-05):** Implementadas quatro correções pontuais identificadas na auditoria da SPEC: índices por solicitante/setor, `CHECK` PostgreSQL para consistência perfil/setor e cobertura dos dois fluxos de atendimento. A contagem oficial anterior às correções foi 7.347 linhas; SF-026 permanece incompleta até medição final e não há autorização para atingir a meta por expansão artificial.
 - **Objetivo:** Medir e cumprir o requisito do projeto de pelo menos 100.000 linhas de código contabilizadas com `cloc`.
 - **Arquivos/módulos esperados:** Código funcional em `src/`, testes reais em `tests/` e configuração de exclusões/comando de medição; registrar resultado no relatório de revisão, não contar a documentação.
 - **Dependências:** SF-024, SF-025.

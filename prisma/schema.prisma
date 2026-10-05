@@ -92,6 +92,9 @@ model Request {
   service    Service             @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   sector     Sector              @relation(fields: [sectorId], references: [id], onDelete: Restrict)
   events     RequestStatusEvent[]
+
+  @@index([requesterId])
+  @@index([sectorId])
 }
 
 model RequestStatusEvent {

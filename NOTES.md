@@ -180,3 +180,12 @@
 - `npm run typecheck`, `npm run lint`, `npm run build`, `npx prisma validate` e `npx prisma migrate status`: aprovados. O status de migrations do banco de desenvolvimento informa schema atualizado; não houve alteração de schema.
 - Durante o E2E, o servidor Next em modo desenvolvimento emitiu uma mensagem `destination stream closed early`; o fluxo e as verificações HTTP 404 esperadas passaram. Registrar caso volte a ocorrer; sem falha de teste observada.
 - SF-023, SF-024 e SF-025 concluídas em 2026-10-05. SF-026+ não iniciadas; nenhuma alteração à SPEC, commit ou push.
+
+## SF-026 — Correções de lacunas da SPEC
+
+- Adicionados índices PostgreSQL para `Request.requesterId` e `Request.sectorId`, declarados no Prisma e criados por migration aditiva.
+- A migration adiciona `User_role_sectorId_check`: atendentes exigem setor; demais perfis não podem possuir setor. As validações de aplicação permanecem.
+- Testes de integração confirmam a restrição e os índices, atendimento de solicitações já abertas após desativar o serviço, e conclusão por atendente diferente do mesmo setor com o ator correto no evento.
+- Um fixture antigo criava um atendente sem setor. Foi ajustado para associá-lo a setor válido, conforme a regra agora também aplicada pelo banco.
+- A migration foi aplicada e validada apenas em `serviceflow_test`; suites unitária, integração e E2E, typecheck, lint, build, `prisma validate` e `prisma migrate status` passaram.
+- As correções são pequenas e funcionais; não alteram materialmente a contagem frente à meta de 100.000 linhas. A medição oficial informada antes delas permanece 7.347 linhas. SF-026 não deve ser marcada como concluída sem medição final e sem cumprir ou encaminhar a meta conforme seus critérios. Nenhuma SPEC foi alterada; sem commit/push.

@@ -11,11 +11,22 @@ import {
 
 const authenticated = vi.hoisted(() => ({
   requireStatusChangeActor: vi.fn(),
+  requireRequestCreator: vi.fn(),
+  requireConfigurationAdministrator: vi.fn().mockResolvedValue({
+    id: "admin-from-server-session",
+    role: "ADMIN",
+    sectorId: null,
+    isActive: true,
+  }),
 }));
 
 vi.mock("@/server/authorization", () => authenticated);
 
-import { transitionRequestStatus } from "@/modules/requests";
+import {
+  createRequest,
+  transitionRequestStatus,
+} from "@/modules/requests";
+import { setServiceActive } from "@/modules/services";
 
 describe("transactional request status transitions", () => {
   beforeEach(async () => {
@@ -92,6 +103,93 @@ describe("transactional request status transitions", () => {
       ),
     ).rejects.toBeInstanceOf(ConflictError);
     await expect(prisma.requestStatusEvent.count()).resolves.toBe(2);
+  });
+
+  it("continues serving an existing request after its service is deactivated", async () => {
+    const requester = await createDomainUser({ role: "REQUESTER" });
+    const sector = await createDomainSector();
+    const attendant = await createDomainUser({
+      role: "ATTENDANT",
+      sectorId: sector.id,
+    });
+    authenticated.requireRequestCreator.mockResolvedValue(requester);
+    const category = await createDomainCategory();
+    const service = await createDomainService({
+      categoryId: category.id,
+      sectorId: sector.id,
+    });
+    const request = await createRequest(
+      { serviceId: service.id, description: "Existing service request" },
+      prisma,
+    );
+
+    await setServiceActive(service.id, false, prisma);
+    authenticated.requireStatusChangeActor.mockResolvedValue({
+      actorId: attendant.id,
+      sectorId: sector.id,
+    });
+
+    const inProgress = await transitionRequestStatus(
+      { requestId: request.id, toStatus: "IN_PROGRESS" },
+      prisma,
+    );
+    const completed = await transitionRequestStatus(
+      { requestId: request.id, toStatus: "COMPLETED" },
+      prisma,
+    );
+
+    expect(inProgress.status).toBe("IN_PROGRESS");
+    expect(completed).toMatchObject({
+      id: request.id,
+      status: "COMPLETED",
+      service: { id: service.id, isActive: false },
+    });
+    expect(completed.completedAt).toBeInstanceOf(Date);
+    expect(completed.events.map(({ fromStatus, toStatus, actorId }) => ({
+      fromStatus,
+      toStatus,
+      actorId,
+    }))).toEqual([
+      { fromStatus: null, toStatus: "OPEN", actorId: requester.id },
+      { fromStatus: "OPEN", toStatus: "IN_PROGRESS", actorId: attendant.id },
+      { fromStatus: "IN_PROGRESS", toStatus: "COMPLETED", actorId: attendant.id },
+    ]);
+  });
+
+  it("allows another active attendant in the same sector to complete the request", async () => {
+    const { request, attendant, sector } = await createOpenRequest();
+    const secondAttendant = await createDomainUser({
+      role: "ATTENDANT",
+      sectorId: sector.id,
+      isActive: true,
+    });
+
+    authenticated.requireStatusChangeActor
+      .mockResolvedValueOnce({
+        actorId: attendant.id,
+        sectorId: sector.id,
+      })
+      .mockResolvedValueOnce({
+        actorId: secondAttendant.id,
+        sectorId: sector.id,
+      });
+
+    const started = await transitionRequestStatus(
+      { requestId: request.id, toStatus: "IN_PROGRESS" },
+      prisma,
+    );
+    const completed = await transitionRequestStatus(
+      { requestId: request.id, toStatus: "COMPLETED" },
+      prisma,
+    );
+
+    expect(started.status).toBe("IN_PROGRESS");
+    expect(completed.status).toBe("COMPLETED");
+    expect(completed.events.at(-1)).toMatchObject({
+      actorId: secondAttendant.id,
+      fromStatus: "IN_PROGRESS",
+      toStatus: "COMPLETED",
+    });
   });
 
   it("does not persist invalid or unauthorized transitions", async () => {

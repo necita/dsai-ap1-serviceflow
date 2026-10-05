@@ -9,6 +9,48 @@ import {
 } from "./domain-fixtures";
 
 describe("historical reference integrity", () => {
+  it("enforces user role-sector consistency and request lookup indexes in PostgreSQL", async () => {
+    const sector = await createDomainSector();
+
+    await expect(
+      prisma.user.create({
+        data: {
+          name: "Attendant without sector",
+          email: "attendant-without-sector@example.test",
+          role: "ATTENDANT",
+          passwordHash: "$argon2id$integration-placeholder",
+        },
+      }),
+    ).rejects.toThrow(/User_role_sectorId_check/);
+
+    await expect(
+      prisma.user.create({
+        data: {
+          name: "Requester with sector",
+          email: "requester-with-sector@example.test",
+          role: "REQUESTER",
+          sectorId: sector.id,
+          passwordHash: "$argon2id$integration-placeholder",
+        },
+      }),
+    ).rejects.toThrow(/User_role_sectorId_check/);
+
+    const indexes = await prisma.$queryRaw<{ indexname: string }[]>`
+      SELECT indexname
+      FROM pg_indexes
+      WHERE schemaname = 'public'
+        AND indexname IN (
+          'Request_requesterId_idx',
+          'Request_sectorId_idx'
+        )
+    `;
+
+    expect(indexes.map(({ indexname }) => indexname).sort()).toEqual([
+      "Request_requesterId_idx",
+      "Request_sectorId_idx",
+    ]);
+  });
+
   it("prevents physical deletion of configuration, users, and requests referenced by history", async () => {
     const requester = await createDomainUser({ role: "REQUESTER" });
     const attendantSector = await createDomainSector();
