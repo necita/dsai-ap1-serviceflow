@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-005 concluída e validada em 2026-10-05; SF-006 e tarefas posteriores não iniciadas.
+**Estado:** SF-005 e SF-006 concluídas e validadas em 2026-10-05; SF-007 e tarefas posteriores não iniciadas.
 
 ## Regras de execução
 
@@ -65,6 +65,8 @@
 - **SPEC:** Seções 6, 12, 16 e 18 da SPEC principal.
 
 ### SF-006 — Preparar infraestrutura de testes
+
+- **Estado:** Concluída em 2026-10-05; suites separadas, banco PostgreSQL de teste isolado e smoke checks aprovados.
 
 - **Objetivo:** Configurar Vitest, ambiente PostgreSQL isolado para integração e Playwright, sem misturar dados de teste com desenvolvimento/produção.
 - **Arquivos/módulos esperados:** configuração Vitest/Playwright, `tests/unit/`, `tests/integration/`, `tests/e2e/`, fixtures e scripts de teste.

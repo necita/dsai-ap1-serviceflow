@@ -66,6 +66,34 @@ npx prisma migrate deploy
 
 O Prisma Client fica em um módulo server-side dedicado e não deve ser importado diretamente por componentes cliente.
 
+## Testes
+
+As suites são separadas:
+
+```bash
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+```
+
+Os testes de integração exigem um banco PostgreSQL **dedicado** cujo nome termine em `_test`. Não use o banco de desenvolvimento ou produção. Em um PostgreSQL com permissão para criar bancos, crie `serviceflow_test` (por exemplo, `createdb serviceflow_test`). Para Supabase, use uma base de teste separada no projeto; não use apenas outro schema no banco de desenvolvimento.
+
+Copie `.env.test.example` para `.env.test.local` e configure `TEST_DATABASE_URL` com a URL do banco de teste:
+
+```powershell
+Copy-Item .env.test.example .env.test.local
+```
+
+O arquivo `.env.test.local` é ignorado pelo Git. A URL é carregada somente pela configuração de integração; o runner recusa a URL se ela aponta para o mesmo host e banco que `DATABASE_URL`, e nunca usa `DATABASE_URL` como fallback. `npm run test:integration` gera o Prisma Client, verifica a conexão e executa `prisma migrate deploy` exclusivamente contra `TEST_DATABASE_URL`. Os fixtures de integração são limpos antes de cada teste, em ordem compatível com as chaves estrangeiras; mantenha essa base exclusiva para um processo/job de teste por vez.
+
+Instale o Chromium do Playwright uma vez por máquina:
+
+```bash
+npm exec -- playwright install chromium
+```
+
+O smoke E2E valida somente a inicialização do Playwright e do navegador; os fluxos do produto serão cobertos em tarefas posteriores.
+
 ## Verificações
 
 ```bash
@@ -76,4 +104,4 @@ npm run build
 
 Para servir a versão compilada, execute `npm run start` após o build.
 
-O scaffold atual contém somente a estrutura inicial do Next.js e a configuração de ambiente para PostgreSQL. Banco de dados e funcionalidades do produto serão adicionados conforme as tarefas aprovadas em `TASKS.md`.
+O scaffold atual contém a estrutura inicial do Next.js, o schema PostgreSQL/Prisma e a infraestrutura de testes. As funcionalidades do produto serão adicionadas conforme as tarefas aprovadas em `TASKS.md`.
