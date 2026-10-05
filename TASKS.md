@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-005 a SF-010 concluídas e validadas em 2026-10-05; SF-011 e tarefas posteriores não iniciadas.
+**Estado:** SF-005 a SF-014 concluídas e validadas em 2026-10-05; SF-015 e tarefas posteriores não iniciadas.
 
 ## Regras de execução
 
@@ -118,15 +118,17 @@
 
 ### SF-011 — Implementar domínio de setores
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Criar operações administrativas de consulta, criação, edição e desativação lógica de setores.
 - **Arquivos/módulos esperados:** `src/modules/sectors/` (repositório, validação, casos de uso); testes unitários e de integração.
 - **Dependências:** SF-005, SF-007, SF-010.
-- **Critérios de conclusão:** Nome não vazio e único entre ativos; sem exclusão física; desativação rejeitada com serviço ativo ou solicitação pendente; setor inativo não recebe atendente nem serviço ativo; verificações são transacionais.
+- **Critérios de conclusão:** Nome não vazio e único entre ativos; sem exclusão física; desativação rejeitada com atendente ativo, serviço ativo ou solicitação pendente; setor inativo não recebe atendente nem serviço ativo; verificações são transacionais.
 - **Testes relacionados:** Unitários de regras; integração para unicidade, restrições, solicitações pendentes e desativação válida.
 - **SPEC:** Seções 6.2, 7, 11 e 16 da SPEC principal.
 
 ### SF-012 — Implementar domínio de categorias
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Criar operações administrativas de consulta, criação, edição e desativação lógica de categorias.
 - **Arquivos/módulos esperados:** `src/modules/categories/`; testes unitários e de integração.
 - **Dependências:** SF-005, SF-007, SF-010.
@@ -136,15 +138,17 @@
 
 ### SF-013 — Implementar administração de usuários
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Criar operações de administração de usuários, papéis, estado ativo e associação de atendentes a setor.
 - **Arquivos/módulos esperados:** `src/modules/users/`; validações e testes.
-- **Dependências:** SF-009, SF-010, SF-011.
+- **Dependências:** SF-009, SF-010, SF-011, SF-012.
 - **Critérios de conclusão:** Perfil é exclusivo; apenas atendente tem setor e requer setor ativo; e-mail é normalizado/único; senha sempre passa pela camada de hash; não se desativa/rebaixa o último administrador; não se muda/desativa o último atendente de setor com solicitações pendentes; usuário inativo mantém referências históricas.
 - **Testes relacionados:** Unitários para perfil/e-mail; integração para associação, hash, último administrador e último atendente.
 - **SPEC:** Seções 3, 6.1, 7, 10, 11 e 16 da SPEC principal.
 
 ### SF-014 — Implementar domínio de serviços
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Criar operações administrativas de serviços com associação obrigatória a categoria e setor.
 - **Arquivos/módulos esperados:** `src/modules/services/`; validações e testes.
 - **Dependências:** SF-011, SF-012, SF-010.

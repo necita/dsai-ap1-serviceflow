@@ -21,7 +21,7 @@ enum RequestStatus {
 
 model Sector {
   id        String   @id @default(uuid()) @db.Uuid
-  name      String   @unique @db.Citext
+  name      String   @db.Citext
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt @db.Timestamptz
@@ -33,7 +33,7 @@ model Sector {
 
 model Category {
   id        String   @id @default(uuid()) @db.Uuid
-  name      String   @unique @db.Citext
+  name      String   @db.Citext
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt @db.Timestamptz

@@ -75,6 +75,8 @@ npx prisma migrate deploy
 
 O Prisma Client fica em um módulo server-side dedicado e não deve ser importado diretamente por componentes cliente.
 
+Os domínios administrativos server-side ficam em `src/modules/sectors/`, `src/modules/categories/`, `src/modules/users/` e `src/modules/services/`. As operações exigem autorização central de administrador; nomes de setor/categoria são case-insensitive e únicos entre registros ativos. Desativação é lógica e preserva solicitações e referências históricas. Setores/categorias com dependências impeditivas não podem ser desativados; atendentes não podem ser desativados ou transferidos se forem o único atendente ativo necessário às solicitações pendentes do setor.
+
 ## Testes
 
 As suites são separadas:

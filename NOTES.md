@@ -61,3 +61,46 @@
 - Testes unitários cobrem matriz de perfis, sessão e escopos; integração usa usuários/setores/solicitações persistidos no PostgreSQL de teste, incluindo mudança do setor atual do atendente.
 - Verificações finais do bloco: 35 testes unitários, 13 testes de integração, `npm run typecheck`, `npm run lint` e `npm run build` aprovados em 2026-10-05.
 - SF-010 concluída. SF-011 e posteriores não iniciadas.
+
+## SF-011 — Domínio de setores
+
+- Criadas operações server-side administrativas de listagem, criação, renomeação e ativação/desativação lógica; todas exigem `requireConfigurationAdministrator` e usam a validação compartilhada de nome.
+- Desativação executa em transação serializável e recusa setor com atendente ativo, serviço ativo ou solicitação `OPEN`/`IN_PROGRESS`; solicitações concluídas não impedem desativação. A verificação do atendente mantém a regra da SPEC de que atendente não pode estar associado a setor inativo. Não existe operação de exclusão física.
+- A restrição global anterior foi ajustada com migration aditiva para unicidade case-insensitive somente entre setores ativos (`citext` + índice único parcial); nome de setor inativo pode ser reutilizado, mas não reativado se colidir com outro setor ativo.
+- Migration `20261005163800_active_catalog_names` aplicada no `serviceflow_test` e no PostgreSQL de desenvolvimento configurado (`postgres`, schema `public`); sem reset ou exclusão de dados.
+- Validações específicas: cinco testes unitários de regra, seis testes de integração PostgreSQL, `prisma validate`, typecheck e lint aprovados.
+- SF-011 concluída. SF-012 foi iniciada somente depois dessa validação.
+
+## SF-012 — Domínio de categorias
+
+- Implementadas operações server-side administrativas de consulta, criação, edição e ativação/desativação lógica, usando autorização SF-010 e validação compartilhada.
+- Categoria não pode ser desativada enquanto possuir serviço ativo. Transação serializável verifica o vínculo e mantém o estado inalterado em caso de conflito; reativação e referências não apagam dados.
+- Migration `20261005164000_active_category_names` substitui a unicidade global por unicidade case-insensitive entre categorias ativas; aplicada no banco de teste e no banco de desenvolvimento.
+- Validações específicas: dois unitários de regra, quatro integrações PostgreSQL, Prisma validate, typecheck e lint aprovados.
+- SF-012 concluída antes de iniciar SF-013.
+
+## SF-013 — Administração de usuários
+
+- Adicionadas validações compartilhadas de criação/edição: nome, e-mail trim/lowercase, papel exclusivo, regra atendente-setor e senha opcional apenas em edição. Senha fornecida sempre passa por `hashPassword`; resultados e listagens omitem `passwordHash`.
+- Operações administrativas de listagem, criação, edição, ativação/desativação lógica exigem `requireConfigurationAdministrator`; usuários nunca são apagados fisicamente.
+- Transações serializáveis confirmam setor ativo para atendentes, bloqueiam remoção/reclassificação do último administrador ativo e protegem o último atendente ativo de setor com solicitações abertas/em atendimento.
+- Integração confirmou que desativar usuário preserva referências de solicitações. SF-013 depende agora explicitamente de SF-011 e SF-012 em `TASKS.md`.
+- Validações específicas: quatro testes unitários de política/validação e sete integrações PostgreSQL; typecheck e lint aprovados.
+- SF-013 concluída antes de iniciar SF-014.
+
+## SF-014 — Domínio de serviços
+
+- Implementadas operações administrativas server-side para consultar, criar, editar e ativar/desativar serviços; todas exigem o administrador atual e validam entradas com `serviceInputSchema`.
+- Categoria/setor devem existir; criação e ativação exigem ambos ativos. Atualizações de serviço ativo mantêm essa condição; serviço inativo pode ser editado sem forçar reativação.
+- Desativação preserva serviço, solicitações e snapshots existentes. Edições mudam apenas a configuração atual do serviço; snapshots em `Request` não são atualizados.
+- Regras de disponibilidade isoladas em policy e testadas; `assertServiceCanReceiveRequests` rejeita serviço inativo e relações inativas. A operação persistente de abertura ainda pertence a SF-017 e deverá chamar essa policy.
+- Validações específicas: quatro testes unitários de disponibilidade, cinco integrações PostgreSQL; Prisma validate, typecheck e lint aprovados.
+- SF-014 concluída. SF-015 e tarefas posteriores não iniciadas.
+
+## Validações finais — SF-011 a SF-014
+
+- `npm run test:unit`: 49 testes aprovados.
+- `npm run test:integration`: 35 testes aprovados no banco físico `serviceflow_test`.
+- `npm run typecheck`, `npm run lint` e `npm run build`: aprovados.
+- `prisma validate` aprovado; `prisma migrate status` confirmou schema atualizado no banco de desenvolvimento (`postgres`) e no `serviceflow_test`.
+- Migrations apenas substituíram índices únicos de nomes de setor/categoria por índices parciais para registros ativos; sem reset, truncamento ou exclusão de dados.

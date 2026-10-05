@@ -2,6 +2,31 @@ import { z } from "zod";
 
 const nonEmptyTextSchema = z.string().trim().min(1);
 const uuidSchema = z.uuid();
+const userRoleSchema = z.enum(["ADMIN", "REQUESTER", "ATTENDANT"]);
+const sectorAssignmentSchema = uuidSchema.nullable().optional();
+
+function validateUserRoleSector(
+  user: { role: z.infer<typeof userRoleSchema>; sectorId?: string | null },
+  context: z.RefinementCtx,
+): void {
+  const hasSector = user.sectorId !== undefined && user.sectorId !== null;
+
+  if (user.role === "ATTENDANT" && !hasSector) {
+    context.addIssue({
+      code: "custom",
+      path: ["sectorId"],
+      message: "Attendants require a sector.",
+    });
+  }
+
+  if (user.role !== "ATTENDANT" && hasSector) {
+    context.addIssue({
+      code: "custom",
+      path: ["sectorId"],
+      message: "Only attendants may be associated with a sector.",
+    });
+  }
+}
 
 export const nameSchema = nonEmptyTextSchema;
 
@@ -9,29 +34,41 @@ export const emailSchema = z.string().trim().toLowerCase().pipe(z.email());
 
 export const userProfileInputSchema = z
   .object({
-    role: z.enum(["ADMIN", "REQUESTER", "ATTENDANT"]),
-    sectorId: uuidSchema.nullable().optional(),
+    role: userRoleSchema,
+    sectorId: sectorAssignmentSchema,
   })
   .strict()
-  .superRefine((user, context) => {
-    const hasSector = user.sectorId !== undefined && user.sectorId !== null;
+  .superRefine(validateUserRoleSector)
+  .transform((user) => ({
+    ...user,
+    sectorId: user.sectorId ?? null,
+  }));
 
-    if (user.role === "ATTENDANT" && !hasSector) {
-      context.addIssue({
-        code: "custom",
-        path: ["sectorId"],
-        message: "Attendants require a sector.",
-      });
-    }
-
-    if (user.role !== "ATTENDANT" && hasSector) {
-      context.addIssue({
-        code: "custom",
-        path: ["sectorId"],
-        message: "Only attendants may be associated with a sector.",
-      });
-    }
+export const userCreationInputSchema = z
+  .object({
+    name: nameSchema,
+    email: emailSchema,
+    password: z.string().min(1),
+    role: userRoleSchema,
+    sectorId: sectorAssignmentSchema,
   })
+  .strict()
+  .superRefine(validateUserRoleSector)
+  .transform((user) => ({
+    ...user,
+    sectorId: user.sectorId ?? null,
+  }));
+
+export const userUpdateInputSchema = z
+  .object({
+    name: nameSchema,
+    email: emailSchema,
+    password: z.string().min(1).optional(),
+    role: userRoleSchema,
+    sectorId: sectorAssignmentSchema,
+  })
+  .strict()
+  .superRefine(validateUserRoleSector)
   .transform((user) => ({
     ...user,
     sectorId: user.sectorId ?? null,
@@ -66,6 +103,8 @@ export const requestCreationInputSchema = z
   .strict();
 
 export type UserProfileInput = z.output<typeof userProfileInputSchema>;
+export type UserCreationInput = z.output<typeof userCreationInputSchema>;
+export type UserUpdateInput = z.output<typeof userUpdateInputSchema>;
 export type SectorInput = z.output<typeof sectorInputSchema>;
 export type CategoryInput = z.output<typeof categoryInputSchema>;
 export type ServiceInput = z.output<typeof serviceInputSchema>;
