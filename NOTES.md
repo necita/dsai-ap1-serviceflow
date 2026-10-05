@@ -104,3 +104,55 @@
 - `npm run typecheck`, `npm run lint` e `npm run build`: aprovados.
 - `prisma validate` aprovado; `prisma migrate status` confirmou schema atualizado no banco de desenvolvimento (`postgres`) e no `serviceflow_test`.
 - Migrations apenas substituíram índices únicos de nomes de setor/categoria por índices parciais para registros ativos; sem reset, truncamento ou exclusão de dados.
+
+## SF-015 — Interface administrativa
+
+- Criada página `/admin` com listagens, formulários e estados ativo/inativo de setores, categorias, usuários e serviços; serviços/usuários exibem relações atuais. O painel redireciona sessão ausente para login e perfil não autorizado para a página pública existente.
+- Server Actions recebem apenas os campos necessários e delegam operações a SF-011–SF-014, que repetem autorização de administrador e validação no servidor. Mensagens públicas traduzem validação, conflito/dependência e inexistência; erros inesperados continuam sendo lançados sem expor detalhes no formulário.
+- Testes unitários de Server Actions cobrem criação, edição, ativação/desativação, despacho às operações de domínio, mensagens seguras e revalidação de `/admin`; duas integrações exercitam gravação real no PostgreSQL de teste e negação por autorização.
+- `npm run test:unit -- tests/unit/admin-actions.test.ts`: 3 testes aprovados; `npm run typecheck`, `npm run lint` e `npm run build` aprovados. SF-015 concluída antes de iniciar SF-016.
+- Na primeira tentativa de integração administrativa, o teste usou acidentalmente o cliente Prisma padrão; foi identificado um único setor de teste órfão no banco de desenvolvimento, sem relações, e removido especificamente. O teste foi corrigido para injetar o cliente da fixture `serviceflow_test`.
+
+## SF-016 — Catálogo publicado
+
+- Criadas consultas autenticadas para serviços cujo próprio registro, categoria e setor estão ativos; catálogo e detalhe obtêm nomes e descrições atuais do PostgreSQL e agrupam por categoria.
+- Testes: 1 unitário de agrupamento e 2 integrações de disponibilidade/detalhe. SF-016 validada antes de iniciar SF-017.
+
+## SF-017 — Abertura transacional
+
+- `createRequest` valida entrada estrita no servidor, usa o solicitante ativo da autorização, revalida identidade/serviço/relações na transação serializável e grava status `OPEN`, snapshots e evento inicial atomicamente.
+- Testes específicos: 1 unitário de snapshots e 5 integrações para criação, dados forjados, descrição, configuração indisponível e rollback do evento. SF-017 validada antes de iniciar SF-018.
+
+## SF-018 — Consultas do solicitante
+
+- Lista filtra por `requesterId` da sessão. Detalhe combina o ID solicitado com o proprietário autenticado e retorna `NotFound` indistinguível para recurso alheio ou inexistente; snapshots e eventos são retornados, com histórico ordenado cronologicamente.
+- Testes de integração: 2 aprovados para propriedade, ID direto alheio, snapshots e ordenação. SF-018 validada antes de iniciar SF-019.
+
+## SF-019 — Transições e histórico
+
+- Adicionada política estrita `OPEN → IN_PROGRESS → COMPLETED`; o destino é validado explicitamente, e o comando exige atendente autorizado, ativo e do setor atual. Status, `updatedAt`, `completedAt` e evento são gravados em transação serializável; conflito de serialização vira erro de conflito sem criar evento.
+- Testes: 9 casos unitários de matriz de estado e 4 integrações de conclusão/eventos, negação, concorrência e rollback. SF-019 validada antes de iniciar SF-020.
+
+## SF-020 — Fila do atendente
+
+- Consultas de lista e detalhe exigem perfil atendente e limitam por `Request.sectorId`, o setor gravado na abertura, sem depender do setor atual configurado no serviço. IDs alheios/inexistentes retornam `NotFound`; não há atribuição individual.
+- Testes de integração: 2 aprovados para escopo, migração da configuração do serviço e negação de acesso direto a outro setor. SF-020 validada antes de iniciar SF-021.
+
+## SF-021 — Interface do solicitante
+
+- Criadas rotas `/catalog`, `/catalog/[serviceId]`, `/requests` e `/requests/[requestId]`, protegidas no servidor e usando consultas/dados persistidos. Abertura envia apenas serviço e descrição à operação de domínio; interface limita descrição a 10.000 caracteres, mostra feedback/estados vazios e histórico de snapshots, sem ações de status.
+- Layout mantém logout e navegação disponíveis em todas as páginas do solicitante.
+- Testes de Server Action: 2 aprovados para campos permitidos, rejeição lógica de mass assignment e mensagens seguras. Build inclui todas as rotas. SF-021 validada antes de iniciar SF-022.
+
+## SF-022 — Interface do atendente
+
+- Criadas rotas `/queue` e `/queue/[requestId]` para fila do setor, detalhes com snapshots/histórico e ações condicionais de início/conclusão. Cada Server Action escolhe um alvo fixo no servidor e chama a transição SF-019; não há reabertura, cancelamento ou atribuição. Layout mantém logout disponível.
+- A rota `/` agora consulta a sessão server-side e encaminha cada perfil à interface própria; removido o protótipo anterior em memória, que permitia escolher perfil no cliente.
+- Testes de Server Action: 2 aprovados para alvo server-side e mensagens seguras. Build inclui as rotas da fila. SF-022 validada.
+
+## Validações finais — SF-015 a SF-022
+
+- `npm run test:unit`: 72 testes em 20 arquivos aprovados.
+- `npm run test:integration`: 52 testes em 14 arquivos aprovados no banco isolado `serviceflow_test`.
+- `npm run typecheck`, `npm run lint`, `npm run build`, `npx prisma validate` e `npx prisma migrate status`: aprovados; migrations sincronizadas no banco de desenvolvimento.
+- A primeira execução final da suite de integração colidiu com geração simultânea do Prisma Client no build (`EPERM` no rename do DLL do Windows); repetida isoladamente, a suite completou com sucesso. Sem alteração de schema, credenciais, commit ou push. SF-023+ não iniciadas.

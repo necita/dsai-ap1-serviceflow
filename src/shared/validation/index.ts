@@ -102,6 +102,13 @@ export const requestCreationInputSchema = z
   })
   .strict();
 
+export const requestStatusTransitionInputSchema = z
+  .object({
+    requestId: uuidSchema,
+    toStatus: z.enum(["IN_PROGRESS", "COMPLETED"]),
+  })
+  .strict();
+
 export type UserProfileInput = z.output<typeof userProfileInputSchema>;
 export type UserCreationInput = z.output<typeof userCreationInputSchema>;
 export type UserUpdateInput = z.output<typeof userUpdateInputSchema>;
@@ -109,3 +116,6 @@ export type SectorInput = z.output<typeof sectorInputSchema>;
 export type CategoryInput = z.output<typeof categoryInputSchema>;
 export type ServiceInput = z.output<typeof serviceInputSchema>;
 export type RequestCreationInput = z.output<typeof requestCreationInputSchema>;
+export type RequestStatusTransitionInput = z.output<
+  typeof requestStatusTransitionInputSchema
+>;

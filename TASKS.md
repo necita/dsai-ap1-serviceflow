@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-005 a SF-014 concluídas e validadas em 2026-10-05; SF-015 e tarefas posteriores não iniciadas.
+**Estado:** SF-005 a SF-022 concluídas e validadas em 2026-10-05; SF-023+ aguardam dependências.
 
 ## Regras de execução
 
@@ -158,6 +158,7 @@
 
 ### SF-015 — Implementar interface administrativa
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Disponibilizar telas de administração de usuários, setores, categorias e serviços.
 - **Arquivos/módulos esperados:** `src/app/(admin)/admin/`, componentes em `src/shared/components/` e testes dos fluxos de formulário.
 - **Dependências:** SF-011, SF-012, SF-013, SF-014.
@@ -167,6 +168,7 @@
 
 ### SF-016 — Implementar consulta do catálogo
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Disponibilizar ao solicitante catálogo agrupado/organizado por categoria com detalhe do serviço.
 - **Arquivos/módulos esperados:** `src/modules/services/` consultas de catálogo; `src/app/(requester)/catalog/`; testes.
 - **Dependências:** SF-012, SF-014, SF-010.
@@ -176,6 +178,7 @@
 
 ### SF-017 — Implementar criação transacional de solicitações
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Implementar abertura pelo solicitante com validação, snapshots e evento inicial atômicos.
 - **Arquivos/módulos esperados:** `src/modules/requests/` comandos/criação, validação e persistência; testes unitários e de integração.
 - **Dependências:** SF-004, SF-005, SF-007, SF-010, SF-014.
@@ -185,6 +188,7 @@
 
 ### SF-018 — Implementar consultas de solicitações do solicitante
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Permitir lista e detalhe/histórico somente das solicitações abertas pelo usuário atual.
 - **Arquivos/módulos esperados:** `src/modules/requests/` consultas; testes de autorização/integração.
 - **Dependências:** SF-010, SF-017.
@@ -194,6 +198,7 @@
 
 ### SF-019 — Implementar transições e eventos de histórico
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Implementar `OPEN → IN_PROGRESS → COMPLETED`, com histórico append-only e consistência concorrente.
 - **Arquivos/módulos esperados:** `src/modules/requests/` máquina de estados/comandos e `RequestStatusEvent`; testes.
 - **Dependências:** SF-010, SF-017.
@@ -203,6 +208,7 @@
 
 ### SF-020 — Implementar fila e consultas do atendente
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Listar e detalhar solicitações do setor atual do atendente e expor ações válidas de transição.
 - **Arquivos/módulos esperados:** `src/modules/requests/` consultas por setor; testes de autorização.
 - **Dependências:** SF-010, SF-017, SF-019.
@@ -212,6 +218,7 @@
 
 ### SF-021 — Implementar interface do solicitante
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Entregar catálogo, detalhe de serviço, abertura, lista e acompanhamento de solicitações.
 - **Arquivos/módulos esperados:** `src/app/(requester)/catalog/`, `src/app/(requester)/requests/`, componentes e testes de interface.
 - **Dependências:** SF-016, SF-017, SF-018.
@@ -221,6 +228,7 @@
 
 ### SF-022 — Implementar interface do atendente
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Entregar fila por setor, detalhes e ações de início/conclusão.
 - **Arquivos/módulos esperados:** `src/app/(attendant)/queue/`, páginas de detalhe e componentes.
 - **Dependências:** SF-019, SF-020.

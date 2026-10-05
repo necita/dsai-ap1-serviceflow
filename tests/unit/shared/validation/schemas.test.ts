@@ -4,6 +4,7 @@ import {
   emailSchema,
   nameSchema,
   requestCreationInputSchema,
+  requestStatusTransitionInputSchema,
   sectorInputSchema,
   serviceInputSchema,
   userProfileInputSchema,
@@ -120,5 +121,27 @@ describe("shared input schemas", () => {
         description: "",
       }),
     ).toThrow("The submitted input is invalid.");
+  });
+
+  it("validates explicit request transition targets and rejects protected fields", () => {
+    expect(
+      requestStatusTransitionInputSchema.parse({
+        requestId: validUuid,
+        toStatus: "IN_PROGRESS",
+      }),
+    ).toEqual({ requestId: validUuid, toStatus: "IN_PROGRESS" });
+    expect(
+      requestStatusTransitionInputSchema.safeParse({
+        requestId: validUuid,
+        toStatus: "OPEN",
+      }).success,
+    ).toBe(false);
+    expect(
+      requestStatusTransitionInputSchema.safeParse({
+        requestId: validUuid,
+        toStatus: "COMPLETED",
+        actorId: validUuid,
+      }).success,
+    ).toBe(false);
   });
 });

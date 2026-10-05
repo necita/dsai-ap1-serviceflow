@@ -77,6 +77,14 @@ O Prisma Client fica em um módulo server-side dedicado e não deve ser importad
 
 Os domínios administrativos server-side ficam em `src/modules/sectors/`, `src/modules/categories/`, `src/modules/users/` e `src/modules/services/`. As operações exigem autorização central de administrador; nomes de setor/categoria são case-insensitive e únicos entre registros ativos. Desativação é lógica e preserva solicitações e referências históricas. Setores/categorias com dependências impeditivas não podem ser desativados; atendentes não podem ser desativados ou transferidos se forem o único atendente ativo necessário às solicitações pendentes do setor.
 
+## Fluxos disponíveis
+
+- Administradores autenticados configuram usuários, setores, categorias e serviços em `/admin`.
+- Solicitantes autenticados consultam o catálogo publicado em `/catalog`, abrem solicitações a partir do detalhe do serviço e acompanham somente suas próprias solicitações em `/requests`.
+- Atendentes autenticados consultam a fila do setor em `/queue` e iniciam/concluem solicitações permitidas. O setor da fila é o snapshot registrado na abertura; não há atribuição individual.
+- A rota inicial encaminha a sessão autenticada à interface do perfil obtido do servidor; o cliente não escolhe papel.
+- A abertura valida no servidor a disponibilidade atual do serviço, categoria e setor e grava snapshots e evento inicial junto da solicitação. Transições persistem status e evento de histórico atomicamente.
+
 ## Testes
 
 As suites são separadas:
@@ -115,4 +123,4 @@ npm run build
 
 Para servir a versão compilada, execute `npm run start` após o build.
 
-O scaffold atual contém a estrutura inicial do Next.js, o schema PostgreSQL/Prisma e a infraestrutura de testes. As funcionalidades do produto serão adicionadas conforme as tarefas aprovadas em `TASKS.md`.
+As funcionalidades implementadas e suas validações são acompanhadas em `TASKS.md`; os fluxos E2E completos permanecem planejados para SF-025.
