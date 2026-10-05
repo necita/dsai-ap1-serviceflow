@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** Planejamento aprovado; nenhuma tarefa de implementação iniciada.
+**Estado:** SF-005 concluída e validada em 2026-10-05; SF-006 e tarefas posteriores não iniciadas.
 
 ## Regras de execução
 
@@ -54,6 +54,8 @@
 - **SPEC:** Seções 6, 7, 12, 13 e 14 da SPEC principal.
 
 ### SF-005 — Criar e validar migrations
+
+- **Estado:** Concluída em 2026-10-05; migration inicial aplicada e schema verificado no banco de projeto.
 
 - **Objetivo:** Versionar a criação do schema e validar instalação e reconstrução a partir de banco vazio.
 - **Arquivos/módulos esperados:** `prisma/migrations/`, scripts de migration, configuração de CI ou instruções locais.
