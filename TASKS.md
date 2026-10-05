@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-005 e SF-006 concluídas e validadas em 2026-10-05; SF-007 e tarefas posteriores não iniciadas.
+**Estado:** SF-005 a SF-007 concluídas e validadas em 2026-10-05; SF-008 e tarefas posteriores não iniciadas.
 
 ## Regras de execução
 
@@ -76,6 +76,8 @@
 - **SPEC:** Seção 16 da SPEC principal.
 
 ### SF-007 — Implementar validação compartilhada e erros de aplicação
+
+- **Estado:** Concluída em 2026-10-05; schemas server-side, erros sanitizados e testes unitários aprovados.
 
 - **Objetivo:** Definir schemas de entrada e tipos de erro usados pelos módulos, com validação efetiva no servidor.
 - **Arquivos/módulos esperados:** `src/shared/validation/`, `src/server/errors/`, testes unitários correspondentes.
