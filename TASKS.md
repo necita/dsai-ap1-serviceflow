@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-005 a SF-025 concluídas e validadas em 2026-10-05; SF-026+ aguardam dependências.
+**Estado:** SF-001 a SF-025 concluídas; SF-026 incompleta (7.489/100.000 linhas); SF-027 concluída após validação dos procedimentos documentados; SF-028 não iniciada.
 
 ## Regras de execução
 
@@ -268,7 +268,7 @@
 
 ### SF-026 — Verificar meta de código da AP1 com cloc
 
-- **Andamento (2026-10-05):** Implementadas quatro correções pontuais identificadas na auditoria da SPEC: índices por solicitante/setor, `CHECK` PostgreSQL para consistência perfil/setor e cobertura dos dois fluxos de atendimento. A contagem oficial anterior às correções foi 7.347 linhas; SF-026 permanece incompleta até medição final e não há autorização para atingir a meta por expansão artificial.
+- **Andamento (2026-10-05):** Implementadas as quatro correções pontuais identificadas na auditoria da SPEC: índices por solicitante/setor, `CHECK` PostgreSQL para consistência perfil/setor e cobertura dos dois fluxos de atendimento. A contagem oficial atual informada é 7.489 de 100.000 linhas (diferença: 92.511). SF-026 permanece incompleta; não houve inflação artificial de código e não se deve ampliar escopo para perseguir a meta.
 - **Objetivo:** Medir e cumprir o requisito do projeto de pelo menos 100.000 linhas de código contabilizadas com `cloc`.
 - **Arquivos/módulos esperados:** Código funcional em `src/`, testes reais em `tests/` e configuração de exclusões/comando de medição; registrar resultado no relatório de revisão, não contar a documentação.
 - **Dependências:** SF-024, SF-025.
@@ -278,11 +278,12 @@
 
 ### SF-027 — Documentar operação e manter registros do projeto
 
+- **Estado:** Concluída em 2026-10-05 — procedimentos verificados após `npm ci`, com Prisma Client gerado; testes, typecheck, lint, build e estado de migrations do banco de teste passaram.
 - **Objetivo:** Documentar setup, variáveis necessárias sem valores secretos, migrations, bootstrap, execução de testes e decisões técnicas.
 - **Arquivos/módulos esperados:** `README.md`, `NOTES.md`, entrada em `prompts/sessoes/` e diário em `diario/`.
 - **Dependências:** SF-001 a SF-026.
 - **Critérios de conclusão:** Uma pessoa consegue configurar ambiente e executar aplicação/testes seguindo o README; decisões relevantes e limitações estão em NOTES; prompt/sessão e diário refletem o trabalho; nenhum segredo foi documentado.
-- **Testes relacionados:** Seguir as instruções documentadas em ambiente limpo ou verificar cada comando documentado; lint/build/suites finais.
+- **Testes relacionados:** `npm ci` (via `npm.cmd` no PowerShell), `npx prisma generate`, `npx prisma validate`, estado de migrations de `serviceflow_test`, `npm run test:unit` (73), `npm run test:integration` (61), `npm run test:e2e` (1), `npm run typecheck`, `npm run lint` e `npm run build`; todos passaram. O README foi ajustado para documentar a geração inicial do Prisma Client e os launchers `.cmd` no PowerShell quando necessário.
 - **SPEC:** Regras 12 a 14 e Qualidade em `AGENTS.md`; seções 17 e 18 da SPEC principal.
 
 ### SF-028 — Fazer revisão final da entrega

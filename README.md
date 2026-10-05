@@ -2,33 +2,46 @@
 
 Plataforma configurável para gerenciamento de solicitações de serviços internos.
 
-## Requisitos
+## Estado do projeto
+
+- SF-001 a SF-025 estão concluídas.
+- SF-026 continua incompleta: a contagem oficial informada é de 7.489 linhas contabilizáveis, abaixo da meta acadêmica de 100.000. Não se deve inflar a contagem com código artificial nem implementar funcionalidades fora da SPEC para tentar atingir a meta.
+- SF-027 está concluída: os procedimentos documentados foram verificados com instalação limpa das dependências e execução das suites e verificações de qualidade.
+- SF-028 não foi iniciada.
+- Os fluxos E2E completos da primeira entrega já foram implementados e executados com sucesso.
+
+## Requisitos e stack
 
 - Node.js 24.21.0 (mínimo suportado pelo Next.js: 20.9.0).
 - npm 11.19.0.
 
-Essas versões foram verificadas durante a inicialização do scaffold.
+Essas versões foram usadas nas validações do projeto. A stack inclui Next.js 16.3.8, React 19.2.8, TypeScript 5, PostgreSQL com Prisma 6.16.0, Auth.js com Argon2id, Vitest e Playwright com Chromium.
 
 ## Desenvolvimento
 
 Instale as dependências e inicie o servidor:
 
 ```bash
-npm install
+npm ci
+npx prisma generate
 npm run dev
 ```
 
-A aplicação fica disponível em <http://localhost:3000>.
+A aplicação fica disponível em <http://localhost:3000>. Para usar as telas protegidas, configure o banco e crie o primeiro administrador conforme as instruções abaixo.
+
+No Windows PowerShell, se a política de execução bloquear os launchers `npm.ps1` ou `npx.ps1`, use os equivalentes `npm.cmd` e `npx.cmd` (por exemplo, `npm.cmd run dev`); não é necessário alterar a política do sistema.
 
 ## Variáveis de ambiente
 
-Este projeto usa variáveis de ambiente para configurar a conexão com o PostgreSQL local. Crie uma cópia do arquivo de exemplo e ajuste os valores locais sem versionar segredos reais:
+O runtime do Next.js e o Prisma usam `DATABASE_URL` para conectar ao PostgreSQL. Crie um arquivo local ignorado pelo Git (`.env.local` para Next.js; `.env` também é lido pelo Prisma CLI) a partir do exemplo:
 
-```bash
-cp .env.example .env.local
+```powershell
+Copy-Item .env.example .env
 ```
 
 Conteúdo esperado no arquivo local:
+
+Inclua também `AUTH_SECRET=<segredo gerado localmente>`; gere-o pelo comando abaixo e não reutilize valores entre ambientes.
 
 ```env
 NODE_ENV=development
@@ -39,6 +52,7 @@ DATABASE_URL=postgresql://serviceflow:change-me@localhost:5432/serviceflow_dev
 - A URL do banco deve usar o protocolo `postgresql://` ou `postgres://`.
 - O banco deve ser criado previamente em uma instância local do PostgreSQL e o nome do schema/database deve refletir o ambiente escolhido.
 - Gere `AUTH_SECRET` localmente com `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"` e mantenha o valor somente no arquivo de ambiente ignorado pelo Git. Use um valor independente e protegido para cada ambiente.
+- Nunca versione arquivos `.env`, `.env.local` ou `.env.test.local`, nem registre valores reais de conexão ou segredos.
 
 ## Autenticação
 
@@ -50,32 +64,36 @@ Com `DATABASE_URL` configurada no ambiente local (`.env.local` ou outro arquivo 
 
 ## PostgreSQL local
 
-Para o ambiente local de desenvolvimento, configure uma instância PostgreSQL e crie o banco indicado na variável `DATABASE_URL`.
-
-Exemplo de criação local:
+Para desenvolvimento local, crie uma instância PostgreSQL e o banco indicado por `DATABASE_URL`. Por exemplo:
 
 ```bash
 createdb serviceflow_dev
 ```
 
-Em seguida, ajuste o valor de `DATABASE_URL` no arquivo de ambiente local para refletir a porta, usuário e nome do banco em uso.
+Em seguida, configure a URL local correspondente. O ambiente de integração e E2E deve usar outra base física terminada em `_test`; não use o banco de desenvolvimento ou produção para fixtures.
 
 ## Prisma
 
-O projeto usa Prisma para gerenciar a integração com PostgreSQL. A configuração inicial inclui o datasource PostgreSQL e o cliente gerado pelo Prisma.
-
-Comandos de manutenção:
+O esquema fica em `prisma/schema.prisma` e as migrations versionadas ficam em `prisma/migrations/`. O Prisma Client é usado somente no servidor. Após uma instalação limpa (`npm ci`), gere o cliente antes de executar a aplicação ou os testes unitários. Valide também o esquema:
 
 ```bash
 npx prisma validate
 npx prisma generate
-npx prisma migrate dev
+```
+
+Para aplicar migrations existentes em um banco configurado:
+
+```bash
 npx prisma migrate deploy
 ```
 
-O Prisma Client fica em um módulo server-side dedicado e não deve ser importado diretamente por componentes cliente.
+`npx prisma migrate status` consulta o estado das migrations. Use `npx prisma migrate dev` somente em desenvolvimento para criar/aplicar migrations durante mudanças de schema; não edite migrations já aplicadas. Para ambientes existentes/deploy, aplique migrations versionadas com `migrate deploy`.
 
 Os domínios administrativos server-side ficam em `src/modules/sectors/`, `src/modules/categories/`, `src/modules/users/` e `src/modules/services/`. As operações exigem autorização central de administrador; nomes de setor/categoria são case-insensitive e únicos entre registros ativos. Desativação é lógica e preserva solicitações e referências históricas. Setores/categorias com dependências impeditivas não podem ser desativados; atendentes não podem ser desativados ou transferidos se forem o único atendente ativo necessário às solicitações pendentes do setor.
+
+### Backup e recuperação
+
+A política operacional de backup e recuperação do PostgreSQL ainda precisa ser definida para o ambiente de execução. Defina e valide essa política, incluindo um teste de restauração isolado, antes de usar o sistema com dados reais. Consulte também a dependência registrada na seção 18 da SPEC principal; este README não presume frequência, retenção nem objetivos de recuperação.
 
 ## Fluxos disponíveis
 
@@ -87,7 +105,7 @@ Os domínios administrativos server-side ficam em `src/modules/sectors/`, `src/m
 
 ## Testes
 
-As suites são separadas:
+As suites podem ser executadas separadamente:
 
 ```bash
 npm run test:unit
@@ -95,7 +113,7 @@ npm run test:integration
 npm run test:e2e
 ```
 
-Os testes de integração exigem um banco PostgreSQL **dedicado** cujo nome termine em `_test`. Não use o banco de desenvolvimento ou produção. Em um PostgreSQL com permissão para criar bancos, crie `serviceflow_test` (por exemplo, `createdb serviceflow_test`). Para Supabase, use uma base de teste separada no projeto; não use apenas outro schema no banco de desenvolvimento.
+Os testes de integração e E2E exigem um banco PostgreSQL **dedicado** cujo nome termine em `_test`. Nunca use o banco de desenvolvimento ou produção. Crie uma base física separada (por exemplo, `serviceflow_test`); para Supabase, use uma base de teste separada, não apenas outro schema no banco de desenvolvimento.
 
 Copie `.env.test.example` para `.env.test.local` e configure `TEST_DATABASE_URL` com a URL do banco de teste:
 
@@ -103,7 +121,7 @@ Copie `.env.test.example` para `.env.test.local` e configure `TEST_DATABASE_URL`
 Copy-Item .env.test.example .env.test.local
 ```
 
-O arquivo `.env.test.local` é ignorado pelo Git. A URL é carregada somente pela configuração de integração; o runner recusa a URL se ela aponta para o mesmo host e banco que `DATABASE_URL`, e nunca usa `DATABASE_URL` como fallback. `npm run test:integration` gera o Prisma Client, verifica a conexão e executa `prisma migrate deploy` exclusivamente contra `TEST_DATABASE_URL`. Os fixtures de integração são limpos antes de cada teste, em ordem compatível com as chaves estrangeiras; mantenha essa base exclusiva para um processo/job de teste por vez.
+O arquivo `.env.test.local` é ignorado pelo Git. Os runners validam que a URL de teste aponta para uma base dedicada terminada em `_test`, não a mesma base de `DATABASE_URL`, e não usam `DATABASE_URL` como fallback. A suite de integração gera o Prisma Client, testa a conexão e aplica migrations exclusivamente na base de teste; seus fixtures são limpos antes de cada teste. O setup E2E também aplica migrations, limpa a base dedicada e cria um administrador de teste antes de iniciar o navegador. Essa limpeza é destrutiva para os dados da base E2E: mantenha-a exclusiva para testes e para um processo/job por vez.
 
 Instale o Chromium do Playwright uma vez por máquina:
 
@@ -111,7 +129,7 @@ Instale o Chromium do Playwright uma vez por máquina:
 npm exec -- playwright install chromium
 ```
 
-O smoke E2E valida somente a inicialização do Playwright e do navegador; os fluxos do produto serão cobertos em tarefas posteriores.
+Os testes E2E completos já cobrem bootstrap/login, configuração administrativa, catálogo, abertura e consulta das próprias solicitações, atendimento, conclusão e negações críticas para acesso a solicitação alheia ou de outro setor.
 
 ## Verificações
 
@@ -123,4 +141,4 @@ npm run build
 
 Para servir a versão compilada, execute `npm run start` após o build.
 
-As funcionalidades implementadas e suas validações são acompanhadas em `TASKS.md`; os fluxos E2E completos permanecem planejados para SF-025.
+O progresso e as validações por tarefa são registrados em `TASKS.md`, `NOTES.md` e `diario/`. A contagem oficial atual de 7.489 linhas está abaixo da meta de 100.000; SF-026 permanece incompleta. Não se deve acrescentar código artificial ou funcionalidades fora da SPEC para alterar essa contagem. Qualquer ampliação funcional exige aprovação explícita e uma nova SPEC.

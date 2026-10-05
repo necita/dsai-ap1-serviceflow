@@ -189,3 +189,21 @@
 - Um fixture antigo criava um atendente sem setor. Foi ajustado para associá-lo a setor válido, conforme a regra agora também aplicada pelo banco.
 - A migration foi aplicada e validada apenas em `serviceflow_test`; suites unitária, integração e E2E, typecheck, lint, build, `prisma validate` e `prisma migrate status` passaram.
 - As correções são pequenas e funcionais; não alteram materialmente a contagem frente à meta de 100.000 linhas. A medição oficial informada antes delas permanece 7.347 linhas. SF-026 não deve ser marcada como concluída sem medição final e sem cumprir ou encaminhar a meta conforme seus critérios. Nenhuma SPEC foi alterada; sem commit/push.
+
+## SF-026 — Resultado da contagem oficial
+
+- Contagem oficial atual informada em 2026-10-05: **7.489 linhas contabilizáveis**; meta acadêmica: **100.000**; diferença: **92.511 linhas**.
+- SF-026 permanece **não concluída** porque a meta não foi atingida. A auditoria não encontrou caminho legítimo dentro da SPEC atual para aproximar significativamente a contagem.
+- Não houve inflação artificial, duplicação, geração em massa, código sem função ou implementação de funcionalidade fora da SPEC para perseguir a meta.
+- Novas funcionalidades fora da SPEC aprovada exigem aprovação explícita e novas SPECs antes de qualquer implementação.
+
+## SF-027 — Documentação operacional e estado atual
+
+- README atualizado para refletir a stack, execução, configuração PostgreSQL, migrations, bootstrap seguro, suites e fluxos E2E completos já executados. Removeu-se a informação obsoleta de que o E2E ainda estava planejado.
+- Verificação concluída em 2026-10-05 após instalação limpa com `npm ci` (executado via `npm.cmd` porque a política do PowerShell bloqueia `npm.ps1`): `npx prisma generate`, `npx prisma validate`, estado das quatro migrations no banco isolado, 73 testes unitários, 61 de integração, 1 E2E, typecheck, lint e build passaram.
+- A execução limpa identificou que é necessário gerar o Prisma Client antes da suite unitária; o README agora inclui esse passo. Também documenta `npm.cmd`/`npx.cmd` para PowerShell quando os shims `.ps1` forem bloqueados. Não foi alterada a política de execução do sistema.
+- O banco PostgreSQL físico `serviceflow_test` é isolado do banco de desenvolvimento/produção. Integração e E2E exigem `TEST_DATABASE_URL` apontando para base dedicada terminada em `_test`; o setup E2E limpa essa base, então ela deve permanecer exclusiva para testes.
+- Decisões técnicas vigentes: Next.js App Router/TypeScript, Prisma/PostgreSQL, Auth.js com credenciais locais, hashes Argon2id, Vitest e Playwright/Chromium; autorização e validação ocorrem no servidor, usando identidade e escopo atuais do banco.
+- A política operacional de backup e recuperação ainda não está definida. Deve ser definida e ter restauração testada em ambiente isolado antes do uso com dados reais; não foram presumidos frequência, retenção ou objetivos de recuperação.
+- `npm ci` concluiu com aviso de auditoria agregada de 9 vulnerabilidades HIGH; não foi executado `npm audit fix` nem houve alteração de dependências, por estarem fora do escopo documental.
+- SF-027 concluída após verificação dos comandos documentados. SF-028 não foi iniciada. Prompts e registros históricos em `prompts/sessoes/` foram preservados.
