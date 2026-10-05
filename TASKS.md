@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-005 a SF-007 concluídas e validadas em 2026-10-05; SF-008 e tarefas posteriores não iniciadas.
+**Estado:** SF-005 a SF-010 concluídas e validadas em 2026-10-05; SF-011 e tarefas posteriores não iniciadas.
 
 ## Regras de execução
 
@@ -88,6 +88,7 @@
 
 ### SF-008 — Implementar autenticação e sessões
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Integrar autenticação local aprovada, armazenamento seguro de credenciais e leitura atual do usuário autenticado no servidor.
 - **Arquivos/módulos esperados:** `src/modules/auth/`, endpoint Auth.js em `src/app/api/auth/`, `src/server/auth/`, configuração de cookies e testes.
 - **Dependências:** SF-004, SF-005, SF-006, SF-007.
@@ -97,6 +98,7 @@
 
 ### SF-009 — Criar bootstrap seguro do primeiro administrador
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Permitir criar o primeiro administrador em instalação vazia sem credencial padrão ou segredo versionado.
 - **Arquivos/módulos esperados:** `scripts/bootstrap-admin.ts` ou módulo equivalente em `src/modules/auth/`, scripts documentados e testes.
 - **Dependências:** SF-008.
@@ -106,6 +108,7 @@
 
 ### SF-010 — Implementar autorização central no servidor
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Fornecer verificações server-side para perfil, propriedade de solicitante, setor de atendente e estado ativo.
 - **Arquivos/módulos esperados:** `src/server/authorization/`, helpers por domínio e `tests/unit/authorization/`.
 - **Dependências:** SF-008, SF-009.

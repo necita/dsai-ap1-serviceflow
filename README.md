@@ -38,6 +38,15 @@ DATABASE_URL=postgresql://serviceflow:change-me@localhost:5432/serviceflow_dev
 - O arquivo `.env` real deve permanecer fora do Git.
 - A URL do banco deve usar o protocolo `postgresql://` ou `postgres://`.
 - O banco deve ser criado previamente em uma instância local do PostgreSQL e o nome do schema/database deve refletir o ambiente escolhido.
+- Gere `AUTH_SECRET` localmente com `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"` e mantenha o valor somente no arquivo de ambiente ignorado pelo Git. Use um valor independente e protegido para cada ambiente.
+
+## Autenticação
+
+A autenticação usa Auth.js com credenciais locais e sessões JWT em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção. Senhas são verificadas com Argon2id. A callback de sessão consulta o usuário atual no PostgreSQL a cada leitura, atualiza perfil/setor e descarta sessões de contas inativas; os helpers em `src/server/authorization/` aplicam as permissões server-side sem confiar em perfil ou setor enviados pelo cliente. Não há cadastro público nem credencial padrão; o primeiro administrador é provisionado manualmente pelo procedimento seguro de bootstrap abaixo.
+
+### Primeiro administrador
+
+Com `DATABASE_URL` configurada no ambiente local (`.env.local` ou outro arquivo reconhecido pelo Next.js), execute `npm run bootstrap:admin` uma única vez em um terminal interativo. O comando pergunta nome e e-mail e solicita a senha duas vezes sem ecoá-la; não aceita credenciais por argumentos nem variáveis de ambiente. Ele recusa a operação se já houver qualquer administrador, armazena somente o hash Argon2id e não funciona como seed recorrente. Não execute o bootstrap apontando para o banco de testes.
 
 ## PostgreSQL local
 

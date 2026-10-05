@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
+import { SignOutButton } from "@/modules/auth/components/sign-out-button";
 
 type Role = "admin" | "requester" | "attendant";
 type RequestStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED";
@@ -262,11 +263,14 @@ export default function Home() {
 
   return (
     <main style={{ fontFamily: "Arial, sans-serif", maxWidth: 1200, margin: "0 auto", padding: 24, color: "#10233d" }}>
-      <header style={{ marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 38 }}>ServiceFlow</h1>
-        <p style={{ margin: "8px 0 0", color: "#44607c" }}>
-          Fluxo funcional da primeira entrega: administrador, catálogo, solicitação e atendimento.
-        </p>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 38 }}>ServiceFlow</h1>
+          <p style={{ margin: "8px 0 0", color: "#44607c" }}>
+            Fluxo funcional da primeira entrega: administrador, catálogo, solicitação e atendimento.
+          </p>
+        </div>
+        <SignOutButton />
       </header>
 
       <div style={{ marginBottom: 16 }}>

@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { loadEnv } from "vite";
 import { defineConfig } from "vitest/config";
 
@@ -10,6 +11,11 @@ for (const key of ["DATABASE_URL", "TEST_DATABASE_URL"] as const) {
 }
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
   test: {
     include: ["tests/integration/**/*.test.ts"],
     environment: "node",
