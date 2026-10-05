@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-001 a SF-025 concluídas; SF-026 incompleta (7.489/100.000 linhas); SF-027 concluída após validação dos procedimentos documentados; SF-028 não iniciada.
+**Estado:** SF-001 a SF-025 concluídas; SF-026 incompleta (7.489/100.000 linhas); SF-027 concluída após validação dos procedimentos documentados; SF-028 revisada, mas não concluída por dependência incompleta e limitação de medição.
 
 ## Regras de execução
 
@@ -288,9 +288,10 @@
 
 ### SF-028 — Fazer revisão final da entrega
 
+- **Estado:** Revisão executada em 2026-10-05, mas não concluída: SF-026 permanece incompleta (dependência desta tarefa) e o executável `cloc` não está disponível para reproduzir a medição. A contagem oficial permanece 7.489, sem nova medição.
 - **Objetivo:** Confirmar escopo, qualidade, segurança básica, documentação, testes e estado do repositório antes da conclusão.
 - **Arquivos/módulos esperados:** Nenhum arquivo de funcionalidade por padrão; relatório de revisão/diário se exigido pelo processo.
 - **Dependências:** SF-024 a SF-027.
 - **Critérios de conclusão:** Todos os critérios de aceitação aplicáveis da SPEC foram verificados; lint, typecheck, build, unitários, integração e E2E passam; diff revisado; contagem cloc revisada; ausência de segredos confirmada; alterações correspondem às SPECs; `git status` e arquivos alterados foram revisados; falhas ou itens não verificados estão explicitamente registrados. Não criar commit sem solicitação explícita.
-- **Testes relacionados:** Execução final de todas as suites e comandos de qualidade documentados.
+- **Testes relacionados:** `npm run test:unit` (73), `npm run test:integration` (61), `npm run test:e2e` (1), `npm run typecheck`, `npm run lint`, `npm run build`, `npx prisma validate` e migrations da base isolada (`serviceflow_test`, quatro aplicadas, nenhuma pendente) passaram. `cloc` foi tentado com o comando oficial, mas não está disponível no ambiente; mantém-se a contagem oficial registrada de 7.489.
 - **SPEC:** `AGENTS.md`; todas as seções aplicáveis da SPEC principal e a visão geral como contexto.

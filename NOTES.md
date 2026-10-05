@@ -206,4 +206,14 @@
 - Decisões técnicas vigentes: Next.js App Router/TypeScript, Prisma/PostgreSQL, Auth.js com credenciais locais, hashes Argon2id, Vitest e Playwright/Chromium; autorização e validação ocorrem no servidor, usando identidade e escopo atuais do banco.
 - A política operacional de backup e recuperação ainda não está definida. Deve ser definida e ter restauração testada em ambiente isolado antes do uso com dados reais; não foram presumidos frequência, retenção ou objetivos de recuperação.
 - `npm ci` concluiu com aviso de auditoria agregada de 9 vulnerabilidades HIGH; não foi executado `npm audit fix` nem houve alteração de dependências, por estarem fora do escopo documental.
-- SF-027 concluída após verificação dos comandos documentados. SF-028 não foi iniciada. Prompts e registros históricos em `prompts/sessoes/` foram preservados.
+- SF-027 concluída após verificação dos comandos documentados. SF-028 foi revisada, mas não concluída: SF-026 permanece incompleta e `cloc` não está disponível neste ambiente. Prompts e registros históricos em `prompts/sessoes/` foram preservados.
+
+## SF-028 — Revisão final da entrega
+
+- Suites finais passaram: 73 unitários, 61 integração e 1 E2E; typecheck, lint, build e `npx prisma validate` passaram. O estado de migrations foi verificado na base isolada `serviceflow_test`: quatro migrations encontradas, nenhuma pendente.
+- Revisão de escopo e segurança: operações administrativas, catálogo, solicitações e transições chamam as verificações centrais server-side; sessões recarregam perfil/setor/estado do banco. O scan local de arquivos versionados não identificou segredos reais; candidatos de credenciais foram limitados a templates e fixtures de teste/E2E. `.env` e `.env.test.local` não são versionados e estão ignorados.
+- Os registros históricos de sessão permanecem versionados; 14 registros em `prompts/sessoes/` e nenhuma exclusão desses caminhos na história Git consultada.
+- `HEAD` na revisão: `71874363d48bb1548fb946f548052fd420f97371`, sincronizado com `origin/main`; worktree estava limpo antes desta atualização documental. Os commits recentes inspecionados têm trailers `Agent` e `Spec` quando aplicáveis.
+- A contagem oficial continua **7.489**. O comando oficial de `cloc` foi tentado exatamente como especificado, mas não pode ser reproduzido neste computador porque `cloc` não está instalado/disponível no PATH; não foi instalada ferramenta nem calculada contagem substituta.
+- SF-028 permanece **não concluída** porque SF-026 — dependência explícita desta tarefa — está incompleta (7.489/100.000). Também persistem a limitação de reprodução da contagem cloc e a necessidade operacional de definir/testar backup e recuperação antes do uso com dados reais.
+- Nenhum código, SPEC ou dependência foi alterado; sem commit/push.

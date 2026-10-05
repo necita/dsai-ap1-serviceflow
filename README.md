@@ -7,7 +7,7 @@ Plataforma configurável para gerenciamento de solicitações de serviços inter
 - SF-001 a SF-025 estão concluídas.
 - SF-026 continua incompleta: a contagem oficial informada é de 7.489 linhas contabilizáveis, abaixo da meta acadêmica de 100.000. Não se deve inflar a contagem com código artificial nem implementar funcionalidades fora da SPEC para tentar atingir a meta.
 - SF-027 está concluída: os procedimentos documentados foram verificados com instalação limpa das dependências e execução das suites e verificações de qualidade.
-- SF-028 não foi iniciada.
+- SF-028 foi revisada, mas permanece não concluída: SF-026 continua incompleta e o comando `cloc` não está disponível neste ambiente para reproduzir a contagem.
 - Os fluxos E2E completos da primeira entrega já foram implementados e executados com sucesso.
 
 ## Requisitos e stack
