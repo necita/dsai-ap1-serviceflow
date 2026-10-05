@@ -1,11 +1,36 @@
+import { randomBytes } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
+import { loadEnv } from "vite";
+import { getIsolatedTestDatabaseUrl } from "./tests/integration/database-url";
+
+const developmentEnvironment = loadEnv("development", process.cwd(), "");
+const testEnvironment = loadEnv("test", process.cwd(), "");
+
+process.env.DATABASE_URL ??= developmentEnvironment.DATABASE_URL;
+process.env.TEST_DATABASE_URL ??= testEnvironment.TEST_DATABASE_URL;
+
+const testDatabaseUrl = getIsolatedTestDatabaseUrl();
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  fullyParallel: false,
+  workers: 1,
   reporter: "list",
+  globalSetup: "./tests/e2e/global-setup.ts",
   use: {
     ...devices["Desktop Chrome"],
+    baseURL: "http://127.0.0.1:3100",
+  },
+  webServer: {
+    command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
+    url: "http://127.0.0.1:3100/login",
+    env: {
+      NODE_ENV: "development",
+      DATABASE_URL: testDatabaseUrl,
+      AUTH_SECRET: randomBytes(32).toString("base64"),
+    },
+    timeout: 120_000,
+    reuseExistingServer: false,
   },
   projects: [
     {

@@ -24,6 +24,7 @@ vi.mock("@/server/db", () => ({
 
 const currentUser = vi.mocked(getCurrentUser);
 const findRequest = vi.mocked(prisma.request.findUnique);
+const requestId = "00000000-0000-4000-8000-000000000021";
 
 function persistedRequest(requesterId: string, sectorId: string) {
   const timestamp = new Date();
@@ -109,13 +110,13 @@ describe("session-bound authorization helpers", () => {
     );
 
     await expect(
-      requireStatusChangeActor("request-from-path"),
+      requireStatusChangeActor(requestId),
     ).resolves.toEqual({
       actorId: "attendant-id",
       sectorId: "sector-current",
     });
     expect(findRequest).toHaveBeenCalledWith({
-      where: { id: "request-from-path" },
+      where: { id: requestId },
       select: { requesterId: true, sectorId: true },
     });
   });
@@ -132,7 +133,7 @@ describe("session-bound authorization helpers", () => {
     findRequest.mockResolvedValue(persistedRequest("owner-id", "sector-1"));
 
     await expect(
-      requireRequestReader("unowned-request"),
+      requireRequestReader("00000000-0000-4000-8000-000000000022"),
     ).rejects.toMatchObject({ code: "NOT_FOUND", status: 404 });
 
     currentUser.mockResolvedValue({
@@ -145,7 +146,7 @@ describe("session-bound authorization helpers", () => {
     });
 
     await expect(
-      requireRequestReader("admin-request"),
+      requireRequestReader("00000000-0000-4000-8000-000000000023"),
     ).rejects.toMatchObject({ code: "NOT_FOUND", status: 404 });
   });
 
@@ -160,7 +161,9 @@ describe("session-bound authorization helpers", () => {
     });
     findRequest.mockResolvedValue(null);
 
-    await expect(requireRequestReader("missing-request")).rejects.toMatchObject({
+    await expect(
+      requireRequestReader("00000000-0000-4000-8000-000000000024"),
+    ).rejects.toMatchObject({
       code: "NOT_FOUND",
       status: 404,
     });

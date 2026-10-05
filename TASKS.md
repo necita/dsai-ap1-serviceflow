@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-005 a SF-022 concluídas e validadas em 2026-10-05; SF-023+ aguardam dependências.
+**Estado:** SF-005 a SF-025 concluídas e validadas em 2026-10-05; SF-026+ aguardam dependências.
 
 ## Regras de execução
 
@@ -238,6 +238,7 @@
 
 ### SF-023 — Endurecer autorização e validação de ponta a ponta no servidor
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Verificar sistematicamente que todos os handlers/actions protegidos aplicam autenticação, autorização e validação no servidor.
 - **Arquivos/módulos esperados:** `src/server/authorization/`, actions/handlers nos módulos, `tests/integration/authorization/`.
 - **Dependências:** SF-010, SF-013 a SF-022.
@@ -247,6 +248,7 @@
 
 ### SF-024 — Completar testes automatizados de unidade e integração
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Cobrir critérios de aceitação ainda não exercitados pelas suites específicas dos módulos.
 - **Arquivos/módulos esperados:** `tests/unit/`, `tests/integration/`, fixtures e scripts de execução.
 - **Dependências:** SF-006, SF-011 a SF-023.
@@ -256,6 +258,7 @@
 
 ### SF-025 — Implementar e executar testes E2E com Playwright
 
+- **Estado:** Concluída e validada em 2026-10-05.
 - **Objetivo:** Validar os fluxos web completos dos três perfis e negações críticas.
 - **Arquivos/módulos esperados:** `tests/e2e/`, configuração Playwright, fixtures/bootstrap de teste e scripts.
 - **Dependências:** SF-015, SF-016, SF-018 a SF-024.

@@ -6,7 +6,11 @@ import {
 import { requireConfigurationAdministrator } from "@/server/authorization";
 import { ConflictError, NotFoundError } from "@/server/errors";
 import { prisma } from "@/server/db";
-import { categoryInputSchema } from "@/shared/validation";
+import {
+  activeStateSchema,
+  categoryInputSchema,
+  entityIdSchema,
+} from "@/shared/validation";
 import { validateInput } from "@/server/validation";
 import { assertCategoryCanBeDeactivated } from "./policy";
 
@@ -40,18 +44,19 @@ export async function createCategory(
 }
 
 export async function updateCategory(
-  id: string,
+  id: unknown,
   input: unknown,
   database: PrismaClient = prisma,
 ): Promise<Category> {
   await requireConfigurationAdministrator();
+  const categoryId = validateInput(entityIdSchema, id);
   const { name } = validateInput(categoryInputSchema, input);
 
   try {
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.category.findUnique({
-          where: { id },
+          where: { id: categoryId },
           select: { id: true },
         });
 
@@ -60,7 +65,7 @@ export async function updateCategory(
         }
 
         return transaction.category.update({
-          where: { id },
+          where: { id: categoryId },
           data: { name },
         });
       },
@@ -72,17 +77,19 @@ export async function updateCategory(
 }
 
 export async function setCategoryActive(
-  id: string,
-  isActive: boolean,
+  id: unknown,
+  isActive: unknown,
   database: PrismaClient = prisma,
 ): Promise<Category> {
   await requireConfigurationAdministrator();
+  const categoryId = validateInput(entityIdSchema, id);
+  const active = validateInput(activeStateSchema, isActive);
 
   try {
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.category.findUnique({
-          where: { id },
+          where: { id: categoryId },
           select: { id: true },
         });
 
@@ -90,16 +97,16 @@ export async function setCategoryActive(
           throw new NotFoundError();
         }
 
-        if (!isActive) {
+        if (!active) {
           const activeServices = await transaction.service.count({
-            where: { categoryId: id, isActive: true },
+            where: { categoryId, isActive: true },
           });
           assertCategoryCanBeDeactivated(activeServices > 0);
         }
 
         return transaction.category.update({
-          where: { id },
-          data: { isActive },
+          where: { id: categoryId },
+          data: { isActive: active },
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

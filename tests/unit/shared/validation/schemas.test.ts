@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   categoryInputSchema,
+  activeStateInputSchema,
+  entityIdSchema,
   emailSchema,
   nameSchema,
   requestCreationInputSchema,
@@ -17,6 +19,14 @@ describe("shared input schemas", () => {
   it("trims names and rejects empty names", () => {
     expect(nameSchema.parse("  Sector name  ")).toBe("Sector name");
     expect(nameSchema.safeParse("   ").success).toBe(false);
+  });
+
+  it("validates entity identifiers and explicit active-state form values", () => {
+    expect(entityIdSchema.safeParse(validUuid).success).toBe(true);
+    expect(entityIdSchema.safeParse("not-a-uuid").success).toBe(false);
+    expect(activeStateInputSchema.parse("true")).toBe(true);
+    expect(activeStateInputSchema.parse("false")).toBe(false);
+    expect(activeStateInputSchema.safeParse("yes").success).toBe(false);
   });
 
   it("normalizes email addresses before validation", () => {

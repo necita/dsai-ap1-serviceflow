@@ -2,6 +2,8 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { requirePublishedCatalogReader } from "@/server/authorization";
 import { NotFoundError } from "@/server/errors";
 import { prisma } from "@/server/db";
+import { entityIdSchema } from "@/shared/validation";
+import { validateInput } from "@/server/validation";
 
 const publishedServiceInclude = {
   category: { select: { id: true, name: true } },
@@ -29,14 +31,15 @@ export async function listPublishedServices(
 }
 
 export async function getPublishedService(
-  id: string,
+  id: unknown,
   database: PrismaClient = prisma,
 ): Promise<PublishedService> {
   await requirePublishedCatalogReader();
+  const serviceId = validateInput(entityIdSchema, id);
 
   const service = await database.service.findFirst({
     where: {
-      id,
+      id: serviceId,
       isActive: true,
       category: { isActive: true },
       sector: { isActive: true },

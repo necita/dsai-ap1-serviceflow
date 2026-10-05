@@ -7,7 +7,11 @@ import { validateInput } from "@/server/validation";
 import { ConflictError, NotFoundError } from "@/server/errors";
 import { requireConfigurationAdministrator } from "@/server/authorization";
 import { prisma } from "@/server/db";
-import { sectorInputSchema } from "@/shared/validation";
+import {
+  activeStateSchema,
+  entityIdSchema,
+  sectorInputSchema,
+} from "@/shared/validation";
 import { assertSectorCanBeDeactivated } from "./policy";
 
 export { assertSectorCanBeDeactivated } from "./policy";
@@ -40,18 +44,19 @@ export async function createSector(
 }
 
 export async function updateSector(
-  id: string,
+  id: unknown,
   input: unknown,
   database: PrismaClient = prisma,
 ): Promise<Sector> {
   await requireConfigurationAdministrator();
+  const sectorId = validateInput(entityIdSchema, id);
   const { name } = validateInput(sectorInputSchema, input);
 
   try {
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.sector.findUnique({
-          where: { id },
+          where: { id: sectorId },
           select: { id: true },
         });
 
@@ -60,7 +65,7 @@ export async function updateSector(
         }
 
         return transaction.sector.update({
-          where: { id },
+          where: { id: sectorId },
           data: { name },
         });
       },
@@ -72,17 +77,19 @@ export async function updateSector(
 }
 
 export async function setSectorActive(
-  id: string,
-  isActive: boolean,
+  id: unknown,
+  isActive: unknown,
   database: PrismaClient = prisma,
 ): Promise<Sector> {
   await requireConfigurationAdministrator();
+  const sectorId = validateInput(entityIdSchema, id);
+  const active = validateInput(activeStateSchema, isActive);
 
   try {
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.sector.findUnique({
-          where: { id },
+          where: { id: sectorId },
           select: { id: true },
         });
 
@@ -90,17 +97,17 @@ export async function setSectorActive(
           throw new NotFoundError();
         }
 
-        if (!isActive) {
+        if (!active) {
           const [activeServices, activeAttendants, pendingRequests] = await Promise.all([
             transaction.service.count({
-              where: { sectorId: id, isActive: true },
+              where: { sectorId, isActive: true },
             }),
             transaction.user.count({
-              where: { sectorId: id, role: "ATTENDANT", isActive: true },
+              where: { sectorId, role: "ATTENDANT", isActive: true },
             }),
             transaction.request.count({
               where: {
-                sectorId: id,
+                sectorId,
                 status: { in: ["OPEN", "IN_PROGRESS"] },
               },
             }),
@@ -114,8 +121,8 @@ export async function setSectorActive(
         }
 
         return transaction.sector.update({
-          where: { id },
-          data: { isActive },
+          where: { id: sectorId },
+          data: { isActive: active },
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

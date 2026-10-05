@@ -6,7 +6,11 @@ import {
 import { requireConfigurationAdministrator } from "@/server/authorization";
 import { ConflictError, NotFoundError } from "@/server/errors";
 import { prisma } from "@/server/db";
-import { serviceInputSchema } from "@/shared/validation";
+import {
+  activeStateSchema,
+  entityIdSchema,
+  serviceInputSchema,
+} from "@/shared/validation";
 import { validateInput } from "@/server/validation";
 import { assertServiceRelationships } from "./policy";
 
@@ -58,18 +62,19 @@ export async function createService(
 }
 
 export async function updateService(
-  id: string,
+  id: unknown,
   input: unknown,
   database: PrismaClient = prisma,
 ): Promise<Service> {
   await requireConfigurationAdministrator();
+  const serviceId = validateInput(entityIdSchema, id);
   const parsed = validateInput(serviceInputSchema, input);
 
   try {
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.service.findUnique({
-          where: { id },
+          where: { id: serviceId },
           select: { id: true, isActive: true },
         });
 
@@ -85,7 +90,7 @@ export async function updateService(
         assertServiceRelationships(relationships, current.isActive);
 
         return transaction.service.update({
-          where: { id },
+          where: { id: serviceId },
           data: parsed,
         });
       },
@@ -97,17 +102,19 @@ export async function updateService(
 }
 
 export async function setServiceActive(
-  id: string,
-  isActive: boolean,
+  id: unknown,
+  isActive: unknown,
   database: PrismaClient = prisma,
 ): Promise<Service> {
   await requireConfigurationAdministrator();
+  const serviceId = validateInput(entityIdSchema, id);
+  const active = validateInput(activeStateSchema, isActive);
 
   try {
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.service.findUnique({
-          where: { id },
+          where: { id: serviceId },
           select: {
             id: true,
             categoryId: true,
@@ -119,7 +126,7 @@ export async function setServiceActive(
           throw new NotFoundError();
         }
 
-        if (isActive) {
+        if (active) {
           const relationships = await loadServiceRelationships(
             transaction,
             current.categoryId,
@@ -129,8 +136,8 @@ export async function setServiceActive(
         }
 
         return transaction.service.update({
-          where: { id },
-          data: { isActive },
+          where: { id: serviceId },
+          data: { isActive: active },
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

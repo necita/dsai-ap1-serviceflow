@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ApplicationError } from "@/server/errors";
+import { activeStateInputSchema } from "@/shared/validation";
+import { validateInput } from "@/server/validation";
 import {
   createSector,
   setSectorActive,
@@ -29,6 +31,10 @@ type Entity = "sectors" | "categories" | "users" | "services";
 function field(formData: FormData, name: string): string {
   const value = formData.get(name);
   return typeof value === "string" ? value : "";
+}
+
+function activeState(formData: FormData): boolean {
+  return validateInput(activeStateInputSchema, field(formData, "isActive"));
 }
 
 function reportFailure(entity: Entity, error: unknown): never {
@@ -78,7 +84,7 @@ export async function toggleSectorAction(formData: FormData): Promise<never> {
   try {
     await setSectorActive(
       field(formData, "id"),
-      field(formData, "isActive") === "true",
+      activeState(formData),
     );
   } catch (error) {
     reportFailure("sectors", error);
@@ -110,7 +116,7 @@ export async function toggleCategoryAction(formData: FormData): Promise<never> {
   try {
     await setCategoryActive(
       field(formData, "id"),
-      field(formData, "isActive") === "true",
+      activeState(formData),
     );
   } catch (error) {
     reportFailure("categories", error);
@@ -152,7 +158,7 @@ export async function toggleUserAction(formData: FormData): Promise<never> {
   try {
     await setUserActive(
       field(formData, "id"),
-      field(formData, "isActive") === "true",
+      activeState(formData),
     );
   } catch (error) {
     reportFailure("users", error);
@@ -192,7 +198,7 @@ export async function toggleServiceAction(formData: FormData): Promise<never> {
   try {
     await setServiceActive(
       field(formData, "id"),
-      field(formData, "isActive") === "true",
+      activeState(formData),
     );
   } catch (error) {
     reportFailure("services", error);

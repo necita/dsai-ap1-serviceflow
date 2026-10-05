@@ -12,6 +12,7 @@ import {
 import { ConflictError, NotFoundError } from "@/server/errors";
 import { prisma } from "@/server/db";
 import {
+  entityIdSchema,
   requestCreationInputSchema,
   requestStatusTransitionInputSchema,
 } from "@/shared/validation";
@@ -137,12 +138,13 @@ export async function listRequesterRequests(
 }
 
 export async function getRequesterRequest(
-  requestId: string,
+  requestId: unknown,
   database: PrismaClient = prisma,
 ): Promise<RequestWithHistoryForRequester> {
   const actor = assertRole(await requireCurrentActor(), "REQUESTER");
+  const id = validateInput(entityIdSchema, requestId);
   const request = await database.request.findFirst({
-    where: { id: requestId, requesterId: actor.id },
+    where: { id, requesterId: actor.id },
     include: requestWithHistory,
   });
 
@@ -170,17 +172,18 @@ export async function listAttendantQueue(
 }
 
 export async function getAttendantRequest(
-  requestId: string,
+  requestId: unknown,
   database: PrismaClient = prisma,
 ): Promise<RequestWithHistory> {
   const actor = assertRole(await requireCurrentActor(), "ATTENDANT");
+  const id = validateInput(entityIdSchema, requestId);
 
   if (!actor.sectorId) {
     throw new NotFoundError();
   }
 
   const request = await database.request.findFirst({
-    where: { id: requestId, sectorId: actor.sectorId },
+    where: { id, sectorId: actor.sectorId },
     include: requestWithHistory,
   });
 

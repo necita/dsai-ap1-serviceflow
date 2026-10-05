@@ -1,6 +1,8 @@
 import { getCurrentUser } from "@/server/auth";
 import { NotFoundError } from "@/server/errors";
 import { prisma } from "@/server/db";
+import { entityIdSchema } from "@/shared/validation";
+import { validateInput } from "@/server/validation";
 import {
   assertActiveActor,
   assertRequestReadable,
@@ -39,7 +41,7 @@ export async function requireRequestCreator(): Promise<AuthorizationActor> {
 }
 
 export async function requireRequestReader(
-  requestId: string,
+  requestId: unknown,
 ): Promise<AuthorizationActor> {
   const actor = await requireCurrentActor();
   const request = await loadRequestScope(requestId);
@@ -47,7 +49,7 @@ export async function requireRequestReader(
 }
 
 export async function requireStatusChangeActor(
-  requestId: string,
+  requestId: unknown,
 ): Promise<{ actorId: string; sectorId: string }> {
   const actor = await requireCurrentActor();
   const request = await loadRequestScope(requestId);
@@ -55,10 +57,11 @@ export async function requireStatusChangeActor(
 }
 
 async function loadRequestScope(
-  requestId: string,
+  requestId: unknown,
 ): Promise<RequestAuthorizationScope> {
+  const id = validateInput(entityIdSchema, requestId);
   const request = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id },
     select: { requesterId: true, sectorId: true },
   });
 

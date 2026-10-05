@@ -156,3 +156,27 @@
 - `npm run test:integration`: 52 testes em 14 arquivos aprovados no banco isolado `serviceflow_test`.
 - `npm run typecheck`, `npm run lint`, `npm run build`, `npx prisma validate` e `npx prisma migrate status`: aprovados; migrations sincronizadas no banco de desenvolvimento.
 - A primeira execução final da suite de integração colidiu com geração simultânea do Prisma Client no build (`EPERM` no rename do DLL do Windows); repetida isoladamente, a suite completou com sucesso. Sem alteração de schema, credenciais, commit ou push. SF-023+ não iniciadas.
+
+## SF-023 — Endurecimento server-side
+
+- Revisados módulos, consultas e Server Actions protegidos; UUIDs e estados ativo/inativo passam por validação runtime e valores de formulário inválidos são recusados, sem converter entradas inesperadas em `false`.
+- Matriz de autorização cobre perfil, usuário inativo, propriedade, setor, IDs inválidos e campos protegidos. Testes focados: 19 unitários e 4 de integração.
+- A autenticação Auth.js preserva schema estrito de email/senha e encaminha somente esses campos à validação; os campos de transporte `csrfToken` e `callbackUrl` do próprio Auth.js não são tratados como dados de domínio.
+
+## SF-024 — Cobertura automatizada
+
+- Adicionados testes de integração para proteção de integridade referencial contra remoções físicas e para confirmar que renomeações de serviço/categoria/setor não reescrevem snapshots já persistidos.
+- Suites completas aprovadas: `npm run test:unit` (73 testes) e `npm run test:integration` (58 testes no banco isolado `serviceflow_test`).
+
+## SF-025 — Testes E2E
+
+- Playwright executa setup em banco dedicado terminado em `_test`, aplica migrations, limpa somente esse banco e cria administrador E2E; o servidor Next usa a mesma URL isolada e um `AUTH_SECRET` efêmero.
+- Um fluxo Chromium cobre bootstrap/login, administração de setores/categorias/usuários/serviços, catálogo, abertura e consulta de solicitações, atendimento/conclusão e negações por propriedade e setor.
+- `npm run test:e2e` aprovado (1 cenário completo). Foi necessário encapsular o setup em função assíncrona compatível com CommonJS e adaptar o provider Auth.js para encaminhar somente email/senha à validação estrita.
+
+## Validações finais — SF-023 a SF-025
+
+- `npm run test:unit`: 73 aprovados; `npm run test:integration`: 58 aprovados em `serviceflow_test`; `npm run test:e2e`: 1 cenário Chromium aprovado.
+- `npm run typecheck`, `npm run lint`, `npm run build`, `npx prisma validate` e `npx prisma migrate status`: aprovados. O status de migrations do banco de desenvolvimento informa schema atualizado; não houve alteração de schema.
+- Durante o E2E, o servidor Next em modo desenvolvimento emitiu uma mensagem `destination stream closed early`; o fluxo e as verificações HTTP 404 esperadas passaram. Registrar caso volte a ocorrer; sem falha de teste observada.
+- SF-023, SF-024 e SF-025 concluídas em 2026-10-05. SF-026+ não iniciadas; nenhuma alteração à SPEC, commit ou push.

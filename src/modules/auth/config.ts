@@ -33,7 +33,11 @@ export const authConfig = {
   providers: [
     Credentials({
       credentials: authCredentialFields,
-      authorize: (credentials) => authenticateCredentials(credentials),
+      authorize: (credentials) =>
+        authenticateCredentials({
+          email: credentials?.email,
+          password: credentials?.password,
+        }),
     }),
   ],
   callbacks: {

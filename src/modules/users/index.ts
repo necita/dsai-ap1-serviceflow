@@ -11,6 +11,8 @@ import {
 } from "@/server/errors";
 import { prisma } from "@/server/db";
 import {
+  activeStateSchema,
+  entityIdSchema,
   userCreationInputSchema,
   userUpdateInputSchema,
 } from "@/shared/validation";
@@ -86,11 +88,12 @@ export async function createUser(
 }
 
 export async function updateUser(
-  id: string,
+  id: unknown,
   input: unknown,
   database: PrismaClient = prisma,
 ): Promise<ManagedUser> {
   await requireConfigurationAdministrator();
+  const userId = validateInput(entityIdSchema, id);
   const parsed = validateInput(userUpdateInputSchema, input);
   const passwordHash = parsed.password
     ? await hashPassword(parsed.password)
@@ -100,7 +103,7 @@ export async function updateUser(
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.user.findUnique({
-          where: { id },
+          where: { id: userId },
           select: {
             id: true,
             role: true,
@@ -129,7 +132,7 @@ export async function updateUser(
         });
 
         return transaction.user.update({
-          where: { id },
+          where: { id: userId },
           data: {
             name: parsed.name,
             email: parsed.email,
@@ -148,17 +151,19 @@ export async function updateUser(
 }
 
 export async function setUserActive(
-  id: string,
-  isActive: boolean,
+  id: unknown,
+  isActive: unknown,
   database: PrismaClient = prisma,
 ): Promise<ManagedUser> {
   await requireConfigurationAdministrator();
+  const userId = validateInput(entityIdSchema, id);
+  const active = validateInput(activeStateSchema, isActive);
 
   try {
     return await database.$transaction(
       async (transaction) => {
         const current = await transaction.user.findUnique({
-          where: { id },
+          where: { id: userId },
           select: {
             id: true,
             role: true,
@@ -171,20 +176,20 @@ export async function setUserActive(
           throw new NotFoundError();
         }
 
-        if (isActive && current.role === "ATTENDANT") {
+        if (active && current.role === "ATTENDANT") {
           await assertActiveSector(transaction, current.sectorId);
         }
 
-        await checkAdministratorRetirement(transaction, current, isActive);
+        await checkAdministratorRetirement(transaction, current, active);
         await checkAttendantSectorChange(transaction, current, {
           role: current.role,
           sectorId: current.sectorId,
-          isActive,
+          isActive: active,
         });
 
         return transaction.user.update({
-          where: { id },
-          data: { isActive },
+          where: { id: userId },
+          data: { isActive: active },
           select: publicUserSelect,
         });
       },

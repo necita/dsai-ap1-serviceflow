@@ -29,6 +29,11 @@ function validateUserRoleSector(
 }
 
 export const nameSchema = nonEmptyTextSchema;
+export const entityIdSchema = uuidSchema;
+export const activeStateSchema = z.boolean();
+export const activeStateInputSchema = z
+  .enum(["true", "false"])
+  .transform((value) => value === "true");
 
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email());
 

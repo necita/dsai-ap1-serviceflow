@@ -5,6 +5,8 @@ import {
   NotFoundError,
   ValidationError,
 } from "@/server/errors";
+import { updateCategory } from "@/modules/categories";
+import { updateSector } from "@/modules/sectors";
 import {
   createDomainCategory,
   createDomainRequest,
@@ -142,6 +144,16 @@ describe("service administration", () => {
         categoryId: nextCategory.id,
         sectorId: nextSector.id,
       },
+      prisma,
+    );
+    await updateCategory(
+      category.id,
+      { name: "Renamed historical category" },
+      prisma,
+    );
+    await updateSector(
+      sector.id,
+      { name: "Renamed historical sector" },
       prisma,
     );
 
