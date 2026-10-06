@@ -28,7 +28,11 @@ npx prisma generate
 npm run dev
 ```
 
-A aplicação fica disponível em <http://localhost:3000>. Para usar as telas protegidas, configure o banco e crie o primeiro administrador conforme as instruções abaixo.
+A aplicação fica disponível publicamente em:
+
+**[Acessar o ServiceFlow](https://dsai-ap1-serviceflow-6ae1.vercel.app/login)**
+
+Para execução local, use `http://localhost:3000`. Para usar as telas protegidas, configure o banco e crie o primeiro administrador conforme as instruções abaixo.
 
 No Windows PowerShell, se a política de execução bloquear os launchers `npm.ps1` ou `npx.ps1`, use os equivalentes `npm.cmd` e `npx.cmd` (por exemplo, `npm.cmd run dev`); não é necessário alterar a política do sistema.
 
