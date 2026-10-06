@@ -79,6 +79,18 @@ export const userUpdateInputSchema = z
     sectorId: user.sectorId ?? null,
   }));
 
+export const ownPasswordChangeInputSchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(12),
+    confirmPassword: z.string().min(12),
+  })
+  .strict()
+  .refine((input) => input.newPassword === input.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Confirmation does not match the new password.",
+  });
+
 export const sectorInputSchema = z
   .object({
     name: nameSchema,
@@ -117,6 +129,7 @@ export const requestStatusTransitionInputSchema = z
 export type UserProfileInput = z.output<typeof userProfileInputSchema>;
 export type UserCreationInput = z.output<typeof userCreationInputSchema>;
 export type UserUpdateInput = z.output<typeof userUpdateInputSchema>;
+export type OwnPasswordChangeInput = z.output<typeof ownPasswordChangeInputSchema>;
 export type SectorInput = z.output<typeof sectorInputSchema>;
 export type CategoryInput = z.output<typeof categoryInputSchema>;
 export type ServiceInput = z.output<typeof serviceInputSchema>;

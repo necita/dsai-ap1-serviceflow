@@ -3,7 +3,7 @@
 **Entrega:** Catálogo configurável e ciclo básico de solicitações  
 **SPEC principal:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`  
 **SPEC de contexto:** `SPEC/2026-09-30-visao-geral.md`  
-**Estado:** SF-001 a SF-025 concluídas; SF-026 incompleta (7.489/100.000 linhas); SF-027 concluída após validação dos procedimentos documentados; SF-028 revisada, mas não concluída por dependência incompleta e limitação de medição.
+**Estado:** SF-001 a SF-025 concluídas; SF-026 incompleta (8.903/100.000 linhas em medição oficial de 2026-10-06); SF-027 concluída após validação dos procedimentos documentados; SF-028 revisada, mas não concluída por dependência incompleta; SF-029 implementada e testada manualmente, com suite automatizada de integração pendente.
 
 ## Regras de execução
 
@@ -268,7 +268,7 @@
 
 ### SF-026 — Verificar meta de código da AP1 com cloc
 
-- **Andamento (2026-10-05):** Implementadas as quatro correções pontuais identificadas na auditoria da SPEC: índices por solicitante/setor, `CHECK` PostgreSQL para consistência perfil/setor e cobertura dos dois fluxos de atendimento. A contagem oficial atual informada é 7.489 de 100.000 linhas (diferença: 92.511). SF-026 permanece incompleta; não houve inflação artificial de código e não se deve ampliar escopo para perseguir a meta.
+- **Andamento (2026-10-06):** Implementadas as quatro correções pontuais identificadas na auditoria da SPEC: índices por solicitante/setor, `CHECK` PostgreSQL para consistência perfil/setor e cobertura dos dois fluxos de atendimento. A medição oficial com o comando cloc definido é **8.903** linhas contabilizáveis de 100.000 (diferença: **91.097**). SF-026 permanece incompleta; não houve inflação artificial de código e não se deve ampliar escopo para perseguir a meta.
 - **Objetivo:** Medir e cumprir o requisito do projeto de pelo menos 100.000 linhas de código contabilizadas com `cloc`.
 - **Arquivos/módulos esperados:** Código funcional em `src/`, testes reais em `tests/` e configuração de exclusões/comando de medição; registrar resultado no relatório de revisão, não contar a documentação.
 - **Dependências:** SF-024, SF-025.
@@ -288,10 +288,20 @@
 
 ### SF-028 — Fazer revisão final da entrega
 
-- **Estado:** Revisão executada em 2026-10-05, mas não concluída: SF-026 permanece incompleta (dependência desta tarefa) e o executável `cloc` não está disponível para reproduzir a medição. A contagem oficial permanece 7.489, sem nova medição.
+- **Estado:** Revisão executada em 2026-10-05, mas não concluída: SF-026 permanece incompleta (dependência desta tarefa). A medição oficial foi reproduzida em 2026-10-06 e totalizou 8.903 linhas; continua pendente a política operacional de backup/recuperação e seu teste de restauração.
 - **Objetivo:** Confirmar escopo, qualidade, segurança básica, documentação, testes e estado do repositório antes da conclusão.
 - **Arquivos/módulos esperados:** Nenhum arquivo de funcionalidade por padrão; relatório de revisão/diário se exigido pelo processo.
 - **Dependências:** SF-024 a SF-027.
 - **Critérios de conclusão:** Todos os critérios de aceitação aplicáveis da SPEC foram verificados; lint, typecheck, build, unitários, integração e E2E passam; diff revisado; contagem cloc revisada; ausência de segredos confirmada; alterações correspondem às SPECs; `git status` e arquivos alterados foram revisados; falhas ou itens não verificados estão explicitamente registrados. Não criar commit sem solicitação explícita.
-- **Testes relacionados:** `npm run test:unit` (73), `npm run test:integration` (61), `npm run test:e2e` (1), `npm run typecheck`, `npm run lint`, `npm run build`, `npx prisma validate` e migrations da base isolada (`serviceflow_test`, quatro aplicadas, nenhuma pendente) passaram. `cloc` foi tentado com o comando oficial, mas não está disponível no ambiente; mantém-se a contagem oficial registrada de 7.489.
+- **Testes relacionados:** Na revisão de 2026-10-05 passaram `npm run test:unit` (73), `npm run test:integration` (61), `npm run test:e2e` (1), typecheck, lint, build, Prisma validate e migrations da base isolada (`serviceflow_test`, quatro aplicadas, nenhuma pendente). Em 2026-10-06, cloc foi executado com o comando oficial: 8.903 linhas contabilizáveis. A limitação de disponibilidade do executável, registrada durante a revisão anterior, foi superada.
 - **SPEC:** `AGENTS.md`; todas as seções aplicáveis da SPEC principal e a visão geral como contexto.
+
+### SF-029 — Implementar autogerenciamento da própria senha
+
+- **Estado:** Implementada e testada manualmente com sucesso em 2026-10-06; validação automatizada de integração bloqueada pelo ambiente (falha de `prisma generate` com `EPERM` e indisponibilidade de conexão ao `TEST_DATABASE_URL`). Não marcar concluída até executar com sucesso a suite PostgreSQL de teste.
+- **Objetivo:** Permitir que qualquer usuário ativo e autenticado altere somente a própria senha, conforme a alteração aprovada em 2026-10-06 na seção 20 da SPEC principal.
+- **Arquivos/módulos esperados:** `src/modules/auth/`, `src/shared/validation/`, `src/app/account/password/`, navegação autenticada, `tests/unit/` e `tests/integration/`.
+- **Dependências:** SF-008 e SF-010.
+- **Critérios de conclusão:** Os três perfis podem alterar a própria senha após validar a atual; nova senha tem pelo menos 12 caracteres e confirmação idêntica; servidor obtém a conta exclusivamente da sessão e recusa `userId`/campos extras; somente hash Argon2id é persistido; erros não expõem credenciais; sessão continua autenticada; falhas de validação não alteram hash; a nova senha autentica em login posterior.
+- **Testes relacionados:** Testes unitários de schema/Server Action; integração PostgreSQL real para ADMIN/REQUESTER/ATTENDANT, senha atual incorreta, regra de 12 caracteres, confirmação, ID forjado, hash persistido, sessão ativa e autenticação subsequente. Unitários (79), typecheck, lint e build passaram; integração ainda não validada devido a bloqueios registrados em NOTES.md. Os testes E2E têm 1 cenário, aprovado na execução anterior à SF-029 e não reexecutado nesta etapa.
+- **SPEC:** `SPEC/2026-09-30-catalogo-e-solicitacoes.md`, seções 3, 4, 7, 15, 16 e 20.

@@ -52,6 +52,9 @@ const PUBLIC_VALIDATION_PATHS = new Set([
   "description",
   "categoryId",
   "serviceId",
+  "currentPassword",
+  "newPassword",
+  "confirmPassword",
 ]);
 
 const PUBLIC_VALIDATION_CODES = new Set([

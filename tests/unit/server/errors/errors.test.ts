@@ -59,12 +59,14 @@ describe("application errors", () => {
     const response = toErrorResponse(
       new ValidationError([
         { path: ["password", "secret-user-input"], code: "sensitive-value" },
+        { path: ["newPassword", "password-value"], code: "too_small" },
         { path: ["description"], code: "too_big" },
       ]),
     );
 
     expect(response.body.error.issues).toEqual([
       { path: [], code: "custom" },
+      { path: ["newPassword"], code: "too_small" },
       { path: ["description"], code: "too_big" },
     ]);
   });

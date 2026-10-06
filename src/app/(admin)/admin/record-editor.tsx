@@ -47,6 +47,7 @@ type RecordEditorProps = {
   record: EditableRecord;
   updateAction: UpdateAction;
   toggleAction: ToggleAction;
+  section?: string;
   sectors?: Choice[];
   categories?: Choice[];
 };
@@ -183,6 +184,7 @@ export function AdminRecordEditor({
   record,
   updateAction,
   toggleAction,
+  section = "overview",
   sectors = [],
   categories = [],
 }: RecordEditorProps) {
@@ -264,6 +266,7 @@ export function AdminRecordEditor({
         <form action={toggleAction} className="entity-actions">
           <input name="id" type="hidden" value={record.id} />
           <input name="isActive" type="hidden" value={String(!record.isActive)} />
+          <input name="section" type="hidden" value={section} />
           <button
             className={record.isActive ? "button-danger" : "button-secondary"}
             type="submit"

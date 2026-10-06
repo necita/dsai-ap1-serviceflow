@@ -27,6 +27,7 @@ import {
 } from "@/modules/services";
 
 type Entity = "sectors" | "categories" | "users" | "services";
+type AdminSection = "overview" | "users" | "sectors" | "categories" | "services";
 
 function field(formData: FormData, name: string): string {
   const value = formData.get(name);
@@ -35,6 +36,16 @@ function field(formData: FormData, name: string): string {
 
 function activeState(formData: FormData): boolean {
   return validateInput(activeStateInputSchema, field(formData, "isActive"));
+}
+
+function selectedSection(formData: FormData): AdminSection {
+  const section = field(formData, "section");
+  return section === "users" ||
+    section === "sectors" ||
+    section === "categories" ||
+    section === "services"
+    ? section
+    : "overview";
 }
 
 export interface AdminUpdateState {
@@ -98,7 +109,7 @@ async function finishUpdate(): Promise<AdminUpdateState> {
   return { status: "success", message: "Alterações salvas." };
 }
 
-function reportFailure(entity: Entity, error: unknown): never {
+function reportFailure(entity: Entity, section: AdminSection, error: unknown): never {
   if (error instanceof ApplicationError) {
     const code =
       error.code === "VALIDATION_ERROR"
@@ -110,15 +121,19 @@ function reportFailure(entity: Entity, error: unknown): never {
             : error.code === "UNAUTHENTICATED" || error.code === "FORBIDDEN"
               ? "access"
               : "unexpected";
-    redirect(`/admin?error=${code}&entity=${entity}`);
+    redirect(`/admin?section=${section}&error=${code}&entity=${entity}`);
   }
 
   throw error;
 }
 
-async function finish(entity: Entity, message: string): Promise<never> {
+async function finish(
+  entity: Entity,
+  message: string,
+  section: AdminSection,
+): Promise<never> {
   revalidatePath("/admin");
-  redirect(`/admin?notice=${message}&entity=${entity}`);
+  redirect(`/admin?section=${section}&notice=${message}&entity=${entity}`);
 }
 
 export async function createSectorAction(
@@ -148,15 +163,16 @@ export async function updateSectorAction(
 }
 
 export async function toggleSectorAction(formData: FormData): Promise<never> {
+  const section = selectedSection(formData);
   try {
     await setSectorActive(
       field(formData, "id"),
       activeState(formData),
     );
   } catch (error) {
-    reportFailure("sectors", error);
+    reportFailure("sectors", section, error);
   }
-  return finish("sectors", "status");
+  return finish("sectors", "status", section);
 }
 
 export async function createCategoryAction(
@@ -186,15 +202,16 @@ export async function updateCategoryAction(
 }
 
 export async function toggleCategoryAction(formData: FormData): Promise<never> {
+  const section = selectedSection(formData);
   try {
     await setCategoryActive(
       field(formData, "id"),
       activeState(formData),
     );
   } catch (error) {
-    reportFailure("categories", error);
+    reportFailure("categories", section, error);
   }
-  return finish("categories", "status");
+  return finish("categories", "status", section);
 }
 
 export async function createUserAction(
@@ -234,15 +251,16 @@ export async function updateUserAction(
 }
 
 export async function toggleUserAction(formData: FormData): Promise<never> {
+  const section = selectedSection(formData);
   try {
     await setUserActive(
       field(formData, "id"),
       activeState(formData),
     );
   } catch (error) {
-    reportFailure("users", error);
+    reportFailure("users", section, error);
   }
-  return finish("users", "status");
+  return finish("users", "status", section);
 }
 
 export async function createServiceAction(
@@ -280,13 +298,14 @@ export async function updateServiceAction(
 }
 
 export async function toggleServiceAction(formData: FormData): Promise<never> {
+  const section = selectedSection(formData);
   try {
     await setServiceActive(
       field(formData, "id"),
       activeState(formData),
     );
   } catch (error) {
-    reportFailure("services", error);
+    reportFailure("services", section, error);
   }
-  return finish("services", "status");
+  return finish("services", "status", section);
 }

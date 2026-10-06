@@ -14,6 +14,7 @@ export default function AttendantLayout({
         </Link>
         <nav aria-label="Navegação principal">
           <Link href="/queue">Fila do meu setor</Link>
+          <Link href="/account/password">Alterar senha</Link>
         </nav>
         <SignOutButton />
       </header>

@@ -162,8 +162,8 @@ describe("administrative Server Actions", () => {
       "Alterações salvas.",
     );
     await expectRedirect(
-      toggleSectorAction(formData({ id: "sector", isActive: "false" })),
-      "/admin?notice=status&entity=sectors",
+      toggleSectorAction(formData({ id: "sector", isActive: "false", section: "sectors" })),
+      "/admin?section=sectors&notice=status&entity=sectors",
     );
     await expectUpdate(
       updateCategoryAction(
@@ -174,8 +174,8 @@ describe("administrative Server Actions", () => {
       "Alterações salvas.",
     );
     await expectRedirect(
-      toggleCategoryAction(formData({ id: "category", isActive: "true" })),
-      "/admin?notice=status&entity=categories",
+      toggleCategoryAction(formData({ id: "category", isActive: "true", section: "categories" })),
+      "/admin?section=categories&notice=status&entity=categories",
     );
     await expectUpdate(
       updateUserAction(
@@ -193,8 +193,8 @@ describe("administrative Server Actions", () => {
       "Alterações salvas.",
     );
     await expectRedirect(
-      toggleUserAction(formData({ id: "user", isActive: "false" })),
-      "/admin?notice=status&entity=users",
+      toggleUserAction(formData({ id: "user", isActive: "false", section: "users" })),
+      "/admin?section=users&notice=status&entity=users",
     );
     await expectUpdate(
       updateServiceAction(
@@ -211,8 +211,8 @@ describe("administrative Server Actions", () => {
       "Alterações salvas.",
     );
     await expectRedirect(
-      toggleServiceAction(formData({ id: "service", isActive: "false" })),
-      "/admin?notice=status&entity=services",
+      toggleServiceAction(formData({ id: "service", isActive: "false", section: "services" })),
+      "/admin?section=services&notice=status&entity=services",
     );
 
     expect(domain.updateSector).toHaveBeenCalledWith("sector", { name: "New name" });
@@ -268,8 +268,12 @@ describe("administrative Server Actions", () => {
 
     domain.setCategoryActive.mockRejectedValueOnce(new ConflictError());
     await expectRedirect(
-      toggleCategoryAction(formData({ id: "category", isActive: "false" })),
-      "/admin?error=dependency&entity=categories",
+      toggleCategoryAction(formData({
+        id: "category",
+        isActive: "false",
+        section: "categories",
+      })),
+      "/admin?section=categories&error=dependency&entity=categories",
     );
 
     domain.createService.mockRejectedValueOnce(

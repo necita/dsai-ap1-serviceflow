@@ -5,9 +5,10 @@ Plataforma configurável para gerenciamento de solicitações de serviços inter
 ## Estado do projeto
 
 - SF-001 a SF-025 estão concluídas.
-- SF-026 continua incompleta: a contagem oficial informada é de 7.489 linhas contabilizáveis, abaixo da meta acadêmica de 100.000. Não se deve inflar a contagem com código artificial nem implementar funcionalidades fora da SPEC para tentar atingir a meta.
+- SF-026 continua incompleta: a medição oficial de 2026-10-06 é de 8.903 linhas contabilizáveis, abaixo da meta acadêmica de 100.000. Não se deve inflar a contagem com código artificial nem implementar funcionalidades fora da SPEC para tentar atingir a meta.
 - SF-027 está concluída: os procedimentos documentados foram verificados com instalação limpa das dependências e execução das suites e verificações de qualidade.
-- SF-028 foi revisada, mas permanece não concluída: SF-026 continua incompleta e o comando `cloc` não está disponível neste ambiente para reproduzir a contagem.
+- SF-028 foi revisada, mas permanece não concluída porque SF-026 continua incompleta e a política operacional de backup/recuperação ainda depende de definição e teste de restauração.
+- SF-029: implementação da alteração da própria senha; testes manuais concluídos com sucesso. A validação automatizada de integração permanece pendente devido à indisponibilidade do setup PostgreSQL/Prisma Client.
 - Os fluxos E2E completos da primeira entrega já foram implementados e executados com sucesso.
 
 ## Requisitos e stack
@@ -56,7 +57,7 @@ DATABASE_URL=postgresql://serviceflow:change-me@localhost:5432/serviceflow_dev
 
 ## Autenticação
 
-A autenticação usa Auth.js com credenciais locais e sessões JWT em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção. Senhas são verificadas com Argon2id. A callback de sessão consulta o usuário atual no PostgreSQL a cada leitura, atualiza perfil/setor e descarta sessões de contas inativas; os helpers em `src/server/authorization/` aplicam as permissões server-side sem confiar em perfil ou setor enviados pelo cliente. Não há cadastro público nem credencial padrão; o primeiro administrador é provisionado manualmente pelo procedimento seguro de bootstrap abaixo.
+A autenticação usa Auth.js com credenciais locais e sessões JWT em cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção. Senhas são verificadas com Argon2id. A callback de sessão consulta o usuário atual no PostgreSQL a cada leitura, atualiza perfil/setor e descarta sessões de contas inativas; os helpers em `src/server/authorization/` aplicam as permissões server-side sem confiar em perfil ou setor enviados pelo cliente. Usuários autenticados podem alterar a própria senha em `/account/password`, informando a senha atual e uma nova senha com pelo menos 12 caracteres e confirmação idêntica; a conta é identificada pela sessão e somente o hash Argon2id é persistido. Não há cadastro público, recuperação de senha nem credencial padrão; o primeiro administrador é provisionado manualmente pelo procedimento seguro de bootstrap abaixo.
 
 ### Primeiro administrador
 
@@ -98,6 +99,7 @@ A política operacional de backup e recuperação do PostgreSQL ainda precisa se
 ## Fluxos disponíveis
 
 - Administradores autenticados configuram usuários, setores, categorias e serviços em `/admin`.
+- Administradores, solicitantes e atendentes autenticados podem alterar somente a própria senha em `/account/password`.
 - Solicitantes autenticados consultam o catálogo publicado em `/catalog`, abrem solicitações a partir do detalhe do serviço e acompanham somente suas próprias solicitações em `/requests`.
 - Atendentes autenticados consultam a fila do setor em `/queue` e iniciam/concluem solicitações permitidas. O setor da fila é o snapshot registrado na abertura; não há atribuição individual.
 - A rota inicial encaminha a sessão autenticada à interface do perfil obtido do servidor; o cliente não escolhe papel.
@@ -141,4 +143,24 @@ npm run build
 
 Para servir a versão compilada, execute `npm run start` após o build.
 
-O progresso e as validações por tarefa são registrados em `TASKS.md`, `NOTES.md` e `diario/`. A contagem oficial atual de 7.489 linhas está abaixo da meta de 100.000; SF-026 permanece incompleta. Não se deve acrescentar código artificial ou funcionalidades fora da SPEC para alterar essa contagem. Qualquer ampliação funcional exige aprovação explícita e uma nova SPEC.
+## Métricas do projeto
+
+Medição oficial executada em 2026-10-06 com `cloc`, usando `--vcs=git` e as exclusões documentadas:
+
+| Métrica | Resultado |
+| --- | ---: |
+| Linhas de código contabilizadas | 8.903 |
+| TypeScript | 7.887 |
+| CSS | 817 |
+| SQL | 97 |
+| Prisma Schema | 94 |
+| JavaScript | 8 |
+| Testes unitários | 79 aprovados |
+| Testes de integração | 68 declarados; 61 passaram na última execução anterior à SF-029 e 7 casos novos de autogerenciamento não foram executados. A execução atual está bloqueada por `EPERM` no `prisma generate` e indisponibilidade de conexão ao `TEST_DATABASE_URL`. |
+| Testes E2E | 1 cenário aprovado na execução registrada da SF-028; não reexecutado nesta etapa. |
+| SPECs principais | 2 |
+| Tarefas registradas no `TASKS.md` | 29 |
+
+A meta acadêmica é 100.000 linhas. A contagem atual está 91.097 linhas abaixo da meta, portanto SF-026 permanece incompleta. A medição usa somente arquivos rastreados pelo Git devido a `--vcs=git`; documentação e prompts estão excluídos. Não se deve criar código artificial nem implementar itens fora da SPEC para alterar a contagem.
+
+O progresso e as validações por tarefa são registrados em `TASKS.md`, `NOTES.md` e `diario/`. Qualquer ampliação funcional exige aprovação explícita e uma nova SPEC.

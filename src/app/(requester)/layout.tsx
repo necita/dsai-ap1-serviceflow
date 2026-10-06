@@ -15,6 +15,7 @@ export default function RequesterLayout({
         <nav aria-label="Navegação principal">
           <Link href="/catalog">Catálogo</Link>
           <Link href="/requests">Minhas solicitações</Link>
+          <Link href="/account/password">Alterar senha</Link>
         </nav>
         <SignOutButton />
       </header>

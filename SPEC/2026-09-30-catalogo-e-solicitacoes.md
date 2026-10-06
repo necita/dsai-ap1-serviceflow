@@ -23,12 +23,14 @@ A instalação atende uma única organização. A configuração administrativa 
 
 - É provisionado no sistema por um procedimento inicial seguro, sem credenciais embutidas no código ou repositório.
 - Pode criar, consultar, editar e desativar usuários, setores, categorias e serviços, respeitadas as regras desta SPEC.
+- Pode alterar a própria senha pelo fluxo de autogerenciamento descrito na alteração aprovada de 2026-10-06; isso não substitui nem amplia as operações administrativas de usuários.
 - Não pode abrir solicitações em nome de outros usuários, consultar solicitações ou mudar seus status por possuir o perfil de administrador.
 - Não pode remover ou desativar o último administrador ativo.
 
 ### 3.2 Solicitante
 
 - Pode consultar o catálogo publicado, abrir solicitações para si próprio e consultar somente as solicitações que abriu.
+- Pode alterar somente a própria senha pelo fluxo de autogerenciamento descrito na alteração aprovada de 2026-10-06.
 - Não pode configurar catálogo ou usuários, nem alterar o status de uma solicitação.
 - Não possui setor associado para fins de autorização.
 
@@ -36,6 +38,7 @@ A instalação atende uma única organização. A configuração administrativa 
 
 - É associado a exatamente um setor ativo por vez.
 - Pode consultar solicitações do setor ao qual está associado e avançar seus status conforme o fluxo definido nesta SPEC.
+- Pode alterar somente a própria senha pelo fluxo de autogerenciamento descrito na alteração aprovada de 2026-10-06.
 - Não pode configurar setores, categorias, serviços ou usuários, nem consultar solicitações de outros setores.
 - Não possui atribuição individual de solicitações; solicitações abertas e em atendimento ficam na fila do setor e podem ser tratadas por qualquer atendente ativo desse setor.
 
@@ -44,6 +47,7 @@ O perfil é um campo obrigatório e exclusivo do usuário: `ADMIN`, `REQUESTER` 
 ## 4. Escopo
 
 - Autenticação de usuários provisionados pelo administrador ou pelo procedimento inicial de bootstrap.
+- Alteração autenticada da própria senha por usuários com perfil `ADMIN`, `REQUESTER` ou `ATTENDANT`, conforme a alteração aprovada de 2026-10-06.
 - Administração de usuários, com perfil e estado ativo/inativo.
 - Cadastro, consulta, edição e desativação lógica de setores, categorias e serviços.
 - Associação de cada serviço a uma categoria e a um setor responsável.
@@ -170,6 +174,7 @@ Restrições relacionais devem impedir referências inexistentes. Os registros r
 16. Renomear ou editar um serviço, categoria ou setor afeta a configuração atual e futuras solicitações; não altera os snapshots das solicitações já criadas.
 17. Mudanças em `service.sector_id` aplicam-se somente a solicitações futuras. Solicitações existentes permanecem no setor registrado em `Request.sector_id`.
 18. Operações concorrentes sobre a mesma solicitação devem validar o status atual no momento da gravação. No máximo uma transição válida pode ser aplicada a partir de um mesmo estado.
+19. A alteração de senha pelo fluxo de autogerenciamento exige sessão autenticada, valida a senha atual, exige nova senha com pelo menos 12 caracteres e confirmação idêntica, e identifica o usuário exclusivamente pela sessão validada no servidor. O fluxo é permitido aos três perfis, altera somente a conta da sessão e persiste somente o hash Argon2id da nova senha. Senhas e confirmação não podem ser registradas em logs nem armazenadas em texto puro. O fluxo não aceita `userId` do cliente para selecionar a conta e mantém a sessão autenticada após sucesso.
 
 ## 8. Fluxo completo da solicitação
 
@@ -310,6 +315,9 @@ A gravação do evento e a atualização de status pertencem à mesma transaçã
 - [ ] Somente `OPEN → IN_PROGRESS` e `IN_PROGRESS → COMPLETED` são aceitas; transições inválidas, repetidas, concorrentes ou após conclusão não alteram o registro nem criam evento.
 - [ ] Cada transição válida grava exatamente um evento imutável com ator, estados e horário UTC; concluir também define `completed_at`.
 - [ ] Usuário inativo não autentica nem executa operações; desativação não apaga solicitações ou eventos e a aplicação preserva ao menos um administrador ativo.
+- [ ] Um usuário autenticado de cada perfil (`ADMIN`, `REQUESTER` e `ATTENDANT`) consegue alterar somente a própria senha, informando a senha atual, uma nova senha com no mínimo 12 caracteres e sua confirmação idêntica.
+- [ ] Senha atual incorreta, nova senha abaixo do mínimo ou confirmação divergente não altera a credencial persistida; a operação identifica a conta apenas pela sessão server-side e não aceita `userId` enviado pelo cliente.
+- [ ] Após alteração válida, somente o hash Argon2id da nova senha é persistido, a senha em texto puro não é registrada nem exibida, a sessão permanece autenticada e a nova senha permite autenticação subsequente.
 - [ ] A suíte automatizada cobre as regras de negócio, autorização, persistência e o percurso web completo definido nesta SPEC.
 
 ## 16. Estratégia de testes
@@ -323,6 +331,7 @@ A gravação do evento e a atualização de status pertencem à mesma transaçã
 - matriz de transições de status, incluindo estados terminais;
 - decisões de autorização para administrador, solicitante e atendente;
 - criação de snapshots a partir da configuração vigente.
+- política de senha da alteração de senha própria: comprimento mínimo, confirmação e rejeição da senha atual incorreta.
 
 ### Testes de integração
 
@@ -334,7 +343,8 @@ Usar PostgreSQL de teste e testar persistência, relações, restrições e tran
 - comprovar rollback conjunto quando a gravação de evento ou solicitação falha;
 - verificar efeitos de edição e desativação sobre solicitações existentes e sobre novas solicitações;
 - testar concorrência de duas transições a partir do mesmo estado;
-- impedir exclusão física de registros referenciados e impedir desativação do último administrador/atendente necessário.
+- impedir exclusão física de registros referenciados e impedir desativação do último administrador/atendente necessário;
+- verificar persistência exclusiva do hash após alteração de senha, rejeição dos casos inválidos sem mudança da credencial e impossibilidade de escolher outra conta por ID de cliente.
 
 ### Testes de autorização
 
@@ -342,11 +352,12 @@ Usar PostgreSQL de teste e testar persistência, relações, restrições e tran
 - acesso de atendente no próprio setor e tentativa em outro setor;
 - tentativa por usuário inativo, não autenticado ou com perfil incorreto;
 - tentativa de forjar no cliente `requester_id`, setor, status, snapshots, ator ou datas;
-- acesso do administrador às operações de configuração e negação de acesso operacional às solicitações.
+- acesso do administrador às operações de configuração e negação de acesso operacional às solicitações;
+- alteração de senha própria autorizada para os três perfis; usuário não autenticado, conta inativa ou tentativa de forjar `userId` não altera nenhuma credencial.
 
 ### Testes ponta a ponta
 
-Cobrir no navegador: autenticação de usuários provisionados, configuração pelo administrador, publicação de serviço, abertura e acompanhamento pelo solicitante, atendimento e conclusão por atendente autorizado, e negação de operações proibidas.
+Cobrir no navegador: autenticação de usuários provisionados, configuração pelo administrador, publicação de serviço, abertura e acompanhamento pelo solicitante, atendimento e conclusão por atendente autorizado, negação de operações proibidas e alteração da própria senha com confirmação de sucesso sem logout e rejeição de senha atual incorreta ou confirmação divergente.
 
 ## 17. Decisões técnicas iniciais
 
@@ -384,3 +395,27 @@ Cada item abaixo permanece fora desta entrega e requer SPEC própria antes de im
 - integrações externas e eventual aplicação mobile nativa;
 - suporte a múltiplas organizações e isolamento entre organizações;
 - políticas mais detalhadas de retenção, exportação e anonimização de dados.
+
+Recuperação de senha, redefinição por terceiro, recuperação por e-mail e alteração da senha de outra pessoa pelo fluxo de autogerenciamento continuam explicitamente fora de escopo e exigem SPEC própria.
+
+## 20. Alteração aprovada — 2026-10-06 — Autogerenciamento da própria senha
+
+Esta alteração aprova, para a primeira entrega, a capacidade de usuários autenticados alterarem a própria senha. Ela complementa as regras de atores e permissões, o escopo, as regras de negócio, os critérios de aceitação e os testes das seções anteriores; não altera as demais permissões nem as operações administrativas já existentes.
+
+### Regra funcional e de segurança
+
+1. `REQUESTER`, `ATTENDANT` e `ADMIN` podem acessar a opção “Alterar senha” quando autenticados e ativos.
+2. O formulário solicita senha atual, nova senha e confirmação da nova senha. A nova senha deve ter pelo menos 12 caracteres; a confirmação deve corresponder exatamente à nova senha.
+3. A operação server-side obtém a identidade exclusivamente da sessão autenticada e carrega a credencial atual dessa conta. Não aceita `userId` ou outro identificador de conta fornecido pelo cliente para selecionar o usuário.
+4. A senha atual deve ser verificada pela camada de autenticação existente. A nova senha deve ser processada pela mesma camada segura de hash já usada pela aplicação (Argon2id) e somente seu hash pode ser persistido.
+5. Senha atual, nova senha e confirmação nunca são exibidas depois do envio, incluídas em mensagens de erro, registradas em logs ou armazenadas em texto puro. A credencial atual não pode ser modificada quando a senha atual for incorreta, a senha nova não atender ao mínimo ou a confirmação divergir.
+6. Após sucesso, a confirmação é exibida e a sessão permanece autenticada. O fluxo de administrador serve exclusivamente para sua própria conta e não substitui a administração de usuários existente.
+7. Recuperação ou redefinição por terceiro, inclusive por e-mail, não é incluída.
+
+### Política mínima definida
+
+A SPEC não possuía política de senha além de exigir valor não vazio nos fluxos de provisionamento/edição existentes. Para esta capacidade, fica definido o mínimo verificável de 12 caracteres para a nova senha. Esta aprovação não altera retroativamente os requisitos dos fluxos existentes de bootstrap ou administração de usuários.
+
+### Critérios de aceitação e testes adicionados
+
+Os três critérios de autogerenciamento estão incluídos na seção 15. As seções 16 (testes unitários, integração, autorização e E2E) foram ampliadas para verificar perfis permitidos, identidade exclusivamente server-side, hash persistido, ausência de alteração nos casos inválidos, permanência da sessão e novo login com a senha alterada.

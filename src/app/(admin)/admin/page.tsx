@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { SignOutButton } from "@/modules/auth/components/sign-out-button";
 import {
   listCategories,
@@ -30,8 +31,23 @@ type AdminPageProps = {
     error?: string;
     entity?: string;
     notice?: string;
+    section?: string;
   }>;
 };
+
+const adminSections = [
+  { id: "overview", label: "Visão geral" },
+  { id: "users", label: "Usuários" },
+  { id: "sectors", label: "Setores" },
+  { id: "categories", label: "Categorias" },
+  { id: "services", label: "Serviços" },
+] as const;
+
+type AdminSection = (typeof adminSections)[number]["id"];
+
+function selectedAdminSection(section?: string): AdminSection {
+  return adminSections.find((item) => item.id === section)?.id ?? "overview";
+}
 
 function announcement(error?: string, notice?: string): string | null {
   if (error === "dependency") {
@@ -64,7 +80,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     throw error;
   }
 
-  const [{ error, notice }, sectors, categories, users, services] =
+  const [{ error, notice, section }, sectors, categories, users, services] =
     await Promise.all([
       searchParams,
       listSectors(),
@@ -73,6 +89,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       listServices(),
     ]);
   const message = announcement(error, notice);
+  const selectedSection = selectedAdminSection(section);
 
   return (
     <main className="page-shell">
@@ -82,8 +99,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <h1>Administração</h1>
           <p>Gerencie usuários, setores, categorias e serviços.</p>
         </div>
-        <SignOutButton />
+        <div className="page-nav">
+          <Link className="button-link-secondary" href="/account/password">
+            Alterar senha
+          </Link>
+          <SignOutButton />
+        </div>
       </header>
+      <nav aria-label="Seções administrativas" className="admin-navigation">
+        {adminSections.map((item) => (
+          <Link
+            aria-current={selectedSection === item.id ? "page" : undefined}
+            className={`admin-navigation-link${selectedSection === item.id ? " is-selected" : ""}`}
+            href={`/admin?section=${item.id}`}
+            key={item.id}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
       {message ? (
         <p
           className={`feedback${error ? " feedback-error" : ""}`}
@@ -94,8 +128,41 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </p>
       ) : null}
 
-      <div className="admin-sections">
-      <section className="admin-section" aria-labelledby="sectors-heading">
+      {selectedSection === "overview" ? (
+        <section aria-labelledby="overview-heading" className="admin-overview">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Resumo da configuração</p>
+              <h2 id="overview-heading">Visão geral</h2>
+              <p className="section-description">Escolha um cadastro para consultar e gerenciar seus registros.</p>
+            </div>
+          </div>
+          <div className="admin-overview-grid">
+            {[
+              { id: "users", label: "Usuários", count: users.length, detail: "Perfis e acessos" },
+              { id: "sectors", label: "Setores", count: sectors.length, detail: "Equipes da organização" },
+              { id: "categories", label: "Categorias", count: categories.length, detail: "Grupos do catálogo" },
+              { id: "services", label: "Serviços", count: services.length, detail: "Opções disponíveis" },
+            ].map((item) => (
+              <Link
+                className="admin-overview-card"
+                href={`/admin?section=${item.id}`}
+                key={item.id}
+              >
+                <span className="eyebrow">{item.label}</span>
+                <strong>{item.count}</strong>
+                <span>{item.detail}</span>
+                <span className="admin-overview-link">Abrir cadastro <span aria-hidden="true">→</span></span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {selectedSection !== "overview" ? (
+        <div className="admin-sections">
+      {selectedSection === "sectors" ? (
+        <section className="admin-section" aria-labelledby="sectors-heading">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Estrutura organizacional</p>
@@ -114,14 +181,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <AdminRecordEditor
               key={sector.id}
               record={{ kind: "sector", ...sector }}
+              section={selectedSection}
               toggleAction={toggleSectorAction}
               updateAction={updateSectorAction}
             />
           ))}
         </ul>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="admin-section" aria-labelledby="categories-heading">
+      {selectedSection === "categories" ? (
+        <section className="admin-section" aria-labelledby="categories-heading">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Catálogo</p>
@@ -140,14 +210,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <AdminRecordEditor
               key={category.id}
               record={{ kind: "category", ...category }}
+              section={selectedSection}
               toggleAction={toggleCategoryAction}
               updateAction={updateCategoryAction}
             />
           ))}
         </ul>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="admin-section" aria-labelledby="users-heading">
+      {selectedSection === "users" ? (
+        <section className="admin-section" aria-labelledby="users-heading">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Acessos e equipes</p>
@@ -185,14 +258,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               key={user.id}
               record={{ kind: "user", ...user }}
               sectors={sectors}
+              section={selectedSection}
               toggleAction={toggleUserAction}
               updateAction={updateUserAction}
             />
           ))}
         </ul>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="admin-section" aria-labelledby="services-heading">
+      {selectedSection === "services" ? (
+        <section className="admin-section" aria-labelledby="services-heading">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Oferta de serviços</p>
@@ -237,13 +313,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               }}
               categories={categories}
               sectors={sectors}
+              section={selectedSection}
               toggleAction={toggleServiceAction}
               updateAction={updateServiceAction}
             />
           ))}
         </ul>
-      </section>
-      </div>
+        </section>
+      ) : null}
+        </div>
+      ) : null}
     </main>
   );
 }

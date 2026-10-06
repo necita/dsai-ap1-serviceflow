@@ -206,7 +206,7 @@
 - Decisões técnicas vigentes: Next.js App Router/TypeScript, Prisma/PostgreSQL, Auth.js com credenciais locais, hashes Argon2id, Vitest e Playwright/Chromium; autorização e validação ocorrem no servidor, usando identidade e escopo atuais do banco.
 - A política operacional de backup e recuperação ainda não está definida. Deve ser definida e ter restauração testada em ambiente isolado antes do uso com dados reais; não foram presumidos frequência, retenção ou objetivos de recuperação.
 - `npm ci` concluiu com aviso de auditoria agregada de 9 vulnerabilidades HIGH; não foi executado `npm audit fix` nem houve alteração de dependências, por estarem fora do escopo documental.
-- SF-027 concluída após verificação dos comandos documentados. SF-028 foi revisada, mas não concluída: SF-026 permanece incompleta e `cloc` não está disponível neste ambiente. Prompts e registros históricos em `prompts/sessoes/` foram preservados.
+- SF-027 concluída após verificação dos comandos documentados. Na revisão SF-028 de 2026-10-05, SF-026 permanecia incompleta e `cloc` não estava disponível neste ambiente; a medição foi posteriormente reproduzida em 2026-10-06, conforme o fechamento abaixo. Prompts e registros históricos em `prompts/sessoes/` foram preservados.
 
 ## SF-028 — Revisão final da entrega
 
@@ -214,6 +214,31 @@
 - Revisão de escopo e segurança: operações administrativas, catálogo, solicitações e transições chamam as verificações centrais server-side; sessões recarregam perfil/setor/estado do banco. O scan local de arquivos versionados não identificou segredos reais; candidatos de credenciais foram limitados a templates e fixtures de teste/E2E. `.env` e `.env.test.local` não são versionados e estão ignorados.
 - Os registros históricos de sessão permanecem versionados; 14 registros em `prompts/sessoes/` e nenhuma exclusão desses caminhos na história Git consultada.
 - `HEAD` na revisão: `71874363d48bb1548fb946f548052fd420f97371`, sincronizado com `origin/main`; worktree estava limpo antes desta atualização documental. Os commits recentes inspecionados têm trailers `Agent` e `Spec` quando aplicáveis.
-- A contagem oficial continua **7.489**. O comando oficial de `cloc` foi tentado exatamente como especificado, mas não pode ser reproduzido neste computador porque `cloc` não está instalado/disponível no PATH; não foi instalada ferramenta nem calculada contagem substituta.
-- SF-028 permanece **não concluída** porque SF-026 — dependência explícita desta tarefa — está incompleta (7.489/100.000). Também persistem a limitação de reprodução da contagem cloc e a necessidade operacional de definir/testar backup e recuperação antes do uso com dados reais.
+- Na revisão de 2026-10-05, a contagem oficial conhecida era **7.489**. O comando oficial de `cloc` não pôde ser reproduzido naquele momento porque o executável não estava disponível; em 2026-10-06 foi feita nova medição oficial, registrada abaixo.
+- SF-028 permanece **não concluída** porque SF-026 — dependência explícita desta tarefa — está incompleta. Também persiste a necessidade operacional de definir/testar backup e recuperação antes do uso com dados reais.
 - Nenhum código, SPEC ou dependência foi alterado; sem commit/push.
+
+## Alteração de SPEC — Autogerenciamento da própria senha (2026-10-06)
+
+- Aprovada inclusão na primeira entrega de alteração da própria senha por usuários autenticados e ativos dos perfis `ADMIN`, `REQUESTER` e `ATTENDANT`.
+- A identidade alvo deve vir exclusivamente da sessão autenticada no servidor. O fluxo não aceita `userId` do cliente para escolher a conta; o administrador usa essa opção somente para si, sem substituir a administração existente de usuários.
+- Como não havia política de senha além de valor não vazio nos fluxos existentes, foi definida para esta capacidade uma nova senha mínima de 12 caracteres e confirmação idêntica. Os requisitos atuais de bootstrap e administração de usuários não foram alterados retroativamente.
+- A senha atual será verificada e a nova senha usará a camada Argon2id existente; apenas o hash pode ser persistido. Credenciais e confirmação não podem ser exibidas após envio, incluídas em erros/logs nem armazenadas em texto puro. A sessão permanece autenticada após sucesso.
+- Recuperação/redefinição por terceiro ou e-mail continua fora de escopo. A regra foi registrada na SPEC antes da implementação.
+
+## SF-029 — Autogerenciamento da própria senha (2026-10-06)
+
+- Implementado o fluxo autenticado para os três perfis, baseado exclusivamente no ator retornado pela sessão server-side. A operação confirma que a conta continua ativa no PostgreSQL, valida a senha atual pela função `verifyPassword` e persiste apenas um novo hash `hashPassword` Argon2id.
+- A validação estrita exige senha atual, nova senha de ao menos 12 caracteres e confirmação idêntica; a entrada não aceita campos extras como `userId`. A atualização condicional por ID da sessão e hash anterior evita sobrescrever alteração concorrente. Não foi alterado schema ou banco.
+- Adicionada página `/account/password`, link na navegação de solicitante, atendente e administrador, formulário com Salvar/Cancelar, mensagens sanitizadas e limpeza dos campos após sucesso. O Auth.js mantém a sessão porque a operação não invalida nem substitui os claims de sessão.
+- Unitários: 79 aprovados; typecheck, lint e build aprovados. `npm.cmd run test:integration` não iniciou os testes: `prisma generate` falhou duas vezes com `EPERM` ao renomear o engine DLL. A execução direta do Vitest também foi impedida pelo setup, que não conseguiu conectar ao `TEST_DATABASE_URL`; os testes de integração adicionados não puderam ser validados neste ambiente. Reexecutar quando Prisma engine e banco de teste estiverem disponíveis.
+- SF-029 permanece em validação, não concluída, até a suite de integração passar. Não houve alteração de autenticação além do fluxo de autogerenciamento, recuperação de senha ou commit/push.
+
+## Fechamento documental e medição oficial (2026-10-06)
+
+- Estado do worktree verificado: existem alterações previamente pendentes em documentação e código, incluindo a navegação administrativa e a implementação SF-029; nenhuma dessas alterações foi revertida ou incorporada nesta medição.
+- Executado exatamente o comando oficial de cloc com a instalação WinGet indicada e `--vcs=git`, exclusões de dependências/build/prompts, linguagens documentais e arquivos `lock`/`.min.`.
+- Resultado real reportado: **8.903 linhas de código** — TypeScript 7.887; CSS 817; SQL 97; Prisma Schema 94; JavaScript 8. São 105 arquivos contabilizados (1.033 linhas em branco, 19 comentários).
+- Meta acadêmica: 100.000; diferença: **91.097**. SF-026 continua incompleta. Como o comando usa `--vcs=git`, apenas arquivos rastreados são considerados; Markdown/documentação e prompts são excluídos.
+- Métricas do repositório em 2026-10-06: 79 testes unitários aprovados; 68 casos de integração declarados (61 passaram na última execução anterior à SF-029; 7 casos de senha próprios ainda sem execução automatizada, devido a `EPERM` de `prisma generate` e falha de conexão ao `TEST_DATABASE_URL`); 1 cenário E2E aprovado na execução registrada da SF-028, não reexecutado nesta etapa; 2 SPECs principais; 29 tarefas SF registradas.
+- Nesta etapa: `npm.cmd run test:unit` passou (79 testes, 21 arquivos); `npm.cmd run typecheck`, `npm.cmd run lint`, `npm.cmd run build` e `git diff --check` passaram. A suíte de integração não foi repetida no fechamento documental; permanece a limitação descrita acima. Nenhum código funcional foi alterado no fechamento documental.
