@@ -46,37 +46,43 @@ export default async function QueueRequestPage({
   }
 
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
+    <main className="page-shell">
+      <header className="detail-heading">
       <nav aria-label="Navegação da fila">
         <Link href="/queue">Voltar à fila</Link>
       </nav>
+      </header>
       {feedback(error, notice) ? (
-        <p role={error ? "alert" : "status"}>{feedback(error, notice)}</p>
+        <p className={`feedback${error ? " feedback-error" : ""}`} role={error ? "alert" : "status"}>
+          {feedback(error, notice)}
+        </p>
       ) : null}
-      <article>
+      <article className="surface-card">
+        <p className="eyebrow">Atendimento da solicitação</p>
         <h1>{request.serviceNameSnapshot}</h1>
-        <p>{statusLabels[request.status]}</p>
+        <p><span className="status-pill">{statusLabels[request.status]}</span></p>
         <p>Categoria: {request.categoryNameSnapshot}</p>
         <p>Setor de origem: {request.sectorNameSnapshot}</p>
         <p>{request.serviceDescriptionSnapshot}</p>
         <h2>Descrição da solicitação</h2>
-        <p style={{ whiteSpace: "pre-wrap" }}>{request.description}</p>
+        <p className="request-description">{request.description}</p>
       </article>
       {request.status === "OPEN" ? (
-        <form action={startRequestAction}>
+        <form className="content-section" action={startRequestAction}>
           <input type="hidden" name="requestId" value={request.id} />
           <button type="submit">Iniciar atendimento</button>
         </form>
       ) : null}
       {request.status === "IN_PROGRESS" ? (
-        <form action={completeRequestAction}>
+        <form className="content-section" action={completeRequestAction}>
           <input type="hidden" name="requestId" value={request.id} />
           <button type="submit">Concluir solicitação</button>
         </form>
       ) : null}
-      <section aria-labelledby="history-heading">
+      <section className="surface-card content-section" aria-labelledby="history-heading">
+        <p className="eyebrow">Rastreabilidade</p>
         <h2 id="history-heading">Histórico</h2>
-        <ol>
+        <ol className="history-list">
           {request.events.map((event) => (
             <li key={event.id}>
               <p>

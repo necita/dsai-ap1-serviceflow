@@ -35,20 +35,24 @@ export default async function ServicePage({
   const message = errorMessage(error);
 
   return (
-    <main style={{ maxWidth: 760, margin: "0 auto", padding: 24 }}>
+    <main className="page-shell">
+      <header className="detail-heading">
       <nav aria-label="Navegação do catálogo">
         <Link href="/catalog">Voltar ao catálogo</Link>
       </nav>
-      <article>
+      </header>
+      <article className="surface-card service-detail">
+        <p className="eyebrow">Detalhes do serviço</p>
         <h1>{service.name}</h1>
         <p>{service.description}</p>
         <p>Categoria: {service.category.name}</p>
         <p>Setor responsável: {service.sector.name}</p>
       </article>
-      {message ? <p role="alert">{message}</p> : null}
-      <section aria-labelledby="request-heading">
+      {message ? <p className="feedback feedback-error" role="alert">{message}</p> : null}
+      <section className="surface-card content-section" aria-labelledby="request-heading">
+        <p className="eyebrow">Próximo passo</p>
         <h2 id="request-heading">Abrir solicitação</h2>
-        <form action={createRequestAction}>
+        <form action={createRequestAction} className="request-form">
           <input type="hidden" name="serviceId" value={service.id} />
           <label htmlFor="request-description">Descreva o que você precisa</label>
           <textarea

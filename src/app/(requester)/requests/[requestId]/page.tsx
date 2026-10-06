@@ -31,28 +31,32 @@ export default async function RequestPage({
   }
 
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
+    <main className="page-shell">
+      <header className="detail-heading">
       <nav aria-label="Navegação das solicitações">
         <Link href="/requests">Minhas solicitações</Link>
       </nav>
+      </header>
       {notice === "created" ? (
-        <p role="status">Sua solicitação foi aberta.</p>
+        <p className="feedback" role="status">Sua solicitação foi aberta.</p>
       ) : null}
-      <article>
+      <article className="surface-card">
+        <p className="eyebrow">Solicitação</p>
         <h1>{request.serviceNameSnapshot}</h1>
-        <p>{statusLabels[request.status]}</p>
+        <p><span className="status-pill">{statusLabels[request.status]}</span></p>
         <p>Categoria: {request.categoryNameSnapshot}</p>
         <p>Setor responsável: {request.sectorNameSnapshot}</p>
         <p>{request.serviceDescriptionSnapshot}</p>
         <h2>Sua descrição</h2>
-        <p style={{ whiteSpace: "pre-wrap" }}>{request.description}</p>
+        <p className="request-description">{request.description}</p>
       </article>
-      <section aria-labelledby="history-heading">
+      <section className="surface-card content-section" aria-labelledby="history-heading">
+        <p className="eyebrow">Rastreabilidade</p>
         <h2 id="history-heading">Histórico</h2>
         {request.events.length === 0 ? (
-          <p>Nenhum evento registrado.</p>
+          <p className="empty-state">Nenhum evento registrado.</p>
         ) : (
-          <ol>
+          <ol className="history-list">
             {request.events.map((event) => (
               <li key={event.id}>
                 <p>

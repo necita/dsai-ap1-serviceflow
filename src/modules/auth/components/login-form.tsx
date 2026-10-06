@@ -36,7 +36,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="login-form" onSubmit={handleSubmit}>
       <label>
         E-mail
         <input autoComplete="username" name="email" required type="email" />
@@ -45,7 +45,7 @@ export function LoginForm() {
         Senha
         <input autoComplete="current-password" name="password" required type="password" />
       </label>
-      {error ? <p role="alert">{error}</p> : null}
+      {error ? <p className="login-error" role="alert">{error}</p> : null}
       <button disabled={isSubmitting} type="submit">
         {isSubmitting ? "Entrando..." : "Entrar"}
       </button>

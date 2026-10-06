@@ -13,12 +13,18 @@ export default async function AttendantQueuePage() {
   const requests = await listAttendantQueue();
 
   return (
-    <main style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-      <h1>Fila do meu setor</h1>
+    <main className="page-shell">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Atendimento</p>
+          <h1>Fila do meu setor</h1>
+          <p>Solicitações encaminhadas à equipe que você atende.</p>
+        </div>
+      </header>
       {requests.length === 0 ? (
-        <p>Não há solicitações no setor.</p>
+        <p className="empty-state">Não há solicitações no setor.</p>
       ) : (
-        <ul>
+        <ul className="content-list">
           {requests.map((request) => (
             <li key={request.id}>
               <h2>
@@ -26,9 +32,9 @@ export default async function AttendantQueuePage() {
                   {request.serviceNameSnapshot}
                 </Link>
               </h2>
-              <p>{statusLabels[request.status]}</p>
+              <p><span className="status-pill">{statusLabels[request.status]}</span></p>
               <p>{request.description}</p>
-              <p>
+              <p className="metadata">
                 Aberta em{" "}
                 <time dateTime={request.createdAt.toISOString()}>
                   {request.createdAt.toLocaleString("pt-BR")}

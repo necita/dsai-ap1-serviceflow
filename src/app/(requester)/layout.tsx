@@ -7,16 +7,15 @@ export default function RequesterLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <>
-      <header
-        style={{
-          maxWidth: 900,
-          margin: "0 auto",
-          padding: "16px 24px 0",
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <Link href="/catalog">ServiceFlow</Link>
+      <header className="app-topbar">
+        <Link className="brand-link" href="/catalog">
+          <span className="brand-mark" aria-hidden="true">S</span>
+          ServiceFlow
+        </Link>
+        <nav aria-label="Navegação principal">
+          <Link href="/catalog">Catálogo</Link>
+          <Link href="/requests">Minhas solicitações</Link>
+        </nav>
         <SignOutButton />
       </header>
       {children}

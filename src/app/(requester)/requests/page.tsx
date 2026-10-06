@@ -13,15 +13,18 @@ export default async function RequestListPage() {
   const requests = await listRequesterRequests();
 
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      <header>
+    <main className="page-shell">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Acompanhamento</p>
         <h1>Minhas solicitações</h1>
+        </div>
         <Link href="/catalog">Voltar ao catálogo</Link>
       </header>
       {requests.length === 0 ? (
-        <p>Você ainda não abriu solicitações.</p>
+        <p className="empty-state">Você ainda não abriu solicitações.</p>
       ) : (
-        <ul>
+        <ul className="content-list">
           {requests.map((request) => (
             <li key={request.id}>
               <h2>
@@ -29,8 +32,8 @@ export default async function RequestListPage() {
                   {request.serviceNameSnapshot}
                 </Link>
               </h2>
-              <p>{statusLabels[request.status]}</p>
-              <p>
+              <p><span className="status-pill">{statusLabels[request.status]}</span></p>
+              <p className="metadata">
                 Aberta em{" "}
                 <time dateTime={request.createdAt.toISOString()}>
                   {request.createdAt.toLocaleString("pt-BR")}
