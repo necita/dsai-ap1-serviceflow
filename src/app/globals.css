@@ -370,6 +370,77 @@ p {
   gap: 14px;
 }
 
+.entity-record-content {
+  min-width: 0;
+}
+
+.entity-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.entity-summary strong {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.entity-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.entity-view-actions,
+.editor-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.entity-editor-form {
+  display: grid;
+  gap: 14px;
+}
+
+.editor-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+
+.editor-fields .wide-field {
+  grid-column: 1 / -1;
+}
+
+.editor-save-button {
+  min-width: 112px;
+  border-color: #0e5855;
+  background: #0e6965;
+  box-shadow: 0 4px 12px rgb(16 86 83 / 17%);
+  font-weight: 750;
+}
+
+.editor-save-button:hover:not(:disabled) {
+  background: #0b514e;
+}
+
+.editor-feedback {
+  margin: 0;
+}
+
+.editor-success {
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .entity-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -667,12 +738,14 @@ p {
 
   .create-form,
   .form-grid,
-  .entity-form {
+  .entity-form,
+  .editor-fields {
     grid-template-columns: 1fr;
   }
 
   .create-form .wide-field,
-  .form-grid .wide-field {
+  .form-grid .wide-field,
+  .editor-fields .wide-field {
     grid-column: auto;
   }
 

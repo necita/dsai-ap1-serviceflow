@@ -37,6 +37,67 @@ function activeState(formData: FormData): boolean {
   return validateInput(activeStateInputSchema, field(formData, "isActive"));
 }
 
+export interface AdminUpdateState {
+  status: "success" | "error";
+  message: string;
+}
+
+function updateErrorMessage(error: ApplicationError): string {
+  switch (error.code) {
+    case "VALIDATION_ERROR":
+      return "Confira os campos: há valores ausentes ou inválidos.";
+    case "CONFLICT":
+      return "A alteração conflita com as dependências ou solicitações existentes.";
+    case "NOT_FOUND":
+      return "O registro não existe mais. Atualize a página e tente novamente.";
+    case "UNAUTHENTICATED":
+    case "FORBIDDEN":
+      return "Sua sessão não tem permissão para essa operação.";
+    default:
+      return "Não foi possível salvar as alterações. Tente novamente.";
+  }
+}
+
+function createErrorMessage(error: ApplicationError): string {
+  switch (error.code) {
+    case "VALIDATION_ERROR":
+      return "Confira os campos: há valores ausentes ou inválidos.";
+    case "CONFLICT":
+      return "Já existe um registro com esses dados ou uma opção selecionada não está disponível.";
+    case "NOT_FOUND":
+      return "Uma das opções selecionadas não existe mais. Atualize a página e tente novamente.";
+    case "UNAUTHENTICATED":
+    case "FORBIDDEN":
+      return "Sua sessão não tem permissão para essa operação.";
+    default:
+      return "Não foi possível criar o registro. Tente novamente.";
+  }
+}
+
+function createFailure(error: unknown): AdminUpdateState {
+  if (error instanceof ApplicationError) {
+    return { status: "error", message: createErrorMessage(error) };
+  }
+  return { status: "error", message: "Não foi possível criar o registro. Tente novamente." };
+}
+
+async function updateFailure(error: unknown): Promise<AdminUpdateState> {
+  if (error instanceof ApplicationError) {
+    return { status: "error", message: updateErrorMessage(error) };
+  }
+  return { status: "error", message: "Não foi possível salvar as alterações. Tente novamente." };
+}
+
+function finishCreate(): AdminUpdateState {
+  revalidatePath("/admin");
+  return { status: "success", message: "Registro criado." };
+}
+
+async function finishUpdate(): Promise<AdminUpdateState> {
+  revalidatePath("/admin");
+  return { status: "success", message: "Alterações salvas." };
+}
+
 function reportFailure(entity: Entity, error: unknown): never {
   if (error instanceof ApplicationError) {
     const code =
@@ -60,24 +121,30 @@ async function finish(entity: Entity, message: string): Promise<never> {
   redirect(`/admin?notice=${message}&entity=${entity}`);
 }
 
-export async function createSectorAction(formData: FormData): Promise<never> {
+export async function createSectorAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await createSector({ name: field(formData, "name") });
   } catch (error) {
-    reportFailure("sectors", error);
+    return createFailure(error);
   }
-  return finish("sectors", "created");
+  return finishCreate();
 }
 
-export async function updateSectorAction(formData: FormData): Promise<never> {
+export async function updateSectorAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await updateSector(field(formData, "id"), {
       name: field(formData, "name"),
     });
   } catch (error) {
-    reportFailure("sectors", error);
+    return updateFailure(error);
   }
-  return finish("sectors", "updated");
+  return finishUpdate();
 }
 
 export async function toggleSectorAction(formData: FormData): Promise<never> {
@@ -92,24 +159,30 @@ export async function toggleSectorAction(formData: FormData): Promise<never> {
   return finish("sectors", "status");
 }
 
-export async function createCategoryAction(formData: FormData): Promise<never> {
+export async function createCategoryAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await createCategory({ name: field(formData, "name") });
   } catch (error) {
-    reportFailure("categories", error);
+    return createFailure(error);
   }
-  return finish("categories", "created");
+  return finishCreate();
 }
 
-export async function updateCategoryAction(formData: FormData): Promise<never> {
+export async function updateCategoryAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await updateCategory(field(formData, "id"), {
       name: field(formData, "name"),
     });
   } catch (error) {
-    reportFailure("categories", error);
+    return updateFailure(error);
   }
-  return finish("categories", "updated");
+  return finishUpdate();
 }
 
 export async function toggleCategoryAction(formData: FormData): Promise<never> {
@@ -124,7 +197,10 @@ export async function toggleCategoryAction(formData: FormData): Promise<never> {
   return finish("categories", "status");
 }
 
-export async function createUserAction(formData: FormData): Promise<never> {
+export async function createUserAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await createUser({
       name: field(formData, "name"),
@@ -134,12 +210,15 @@ export async function createUserAction(formData: FormData): Promise<never> {
       sectorId: field(formData, "sectorId") || null,
     });
   } catch (error) {
-    reportFailure("users", error);
+    return createFailure(error);
   }
-  return finish("users", "created");
+  return finishCreate();
 }
 
-export async function updateUserAction(formData: FormData): Promise<never> {
+export async function updateUserAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await updateUser(field(formData, "id"), {
       name: field(formData, "name"),
@@ -149,9 +228,9 @@ export async function updateUserAction(formData: FormData): Promise<never> {
       sectorId: field(formData, "sectorId") || null,
     });
   } catch (error) {
-    reportFailure("users", error);
+    return updateFailure(error);
   }
-  return finish("users", "updated");
+  return finishUpdate();
 }
 
 export async function toggleUserAction(formData: FormData): Promise<never> {
@@ -166,7 +245,10 @@ export async function toggleUserAction(formData: FormData): Promise<never> {
   return finish("users", "status");
 }
 
-export async function createServiceAction(formData: FormData): Promise<never> {
+export async function createServiceAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await createService({
       name: field(formData, "name"),
@@ -175,12 +257,15 @@ export async function createServiceAction(formData: FormData): Promise<never> {
       sectorId: field(formData, "sectorId"),
     });
   } catch (error) {
-    reportFailure("services", error);
+    return createFailure(error);
   }
-  return finish("services", "created");
+  return finishCreate();
 }
 
-export async function updateServiceAction(formData: FormData): Promise<never> {
+export async function updateServiceAction(
+  _previousState: AdminUpdateState,
+  formData: FormData,
+): Promise<AdminUpdateState> {
   try {
     await updateService(field(formData, "id"), {
       name: field(formData, "name"),
@@ -189,9 +274,9 @@ export async function updateServiceAction(formData: FormData): Promise<never> {
       sectorId: field(formData, "sectorId"),
     });
   } catch (error) {
-    reportFailure("services", error);
+    return updateFailure(error);
   }
-  return finish("services", "updated");
+  return finishUpdate();
 }
 
 export async function toggleServiceAction(formData: FormData): Promise<never> {

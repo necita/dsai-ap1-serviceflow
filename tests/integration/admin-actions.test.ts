@@ -46,17 +46,24 @@ describe("administrative Server Action integration", () => {
 
   it("persists create and update forms through the protected domain operations", async () => {
     await expect(
-      createSectorAction(formData({ name: "Action integration sector" })),
-    ).rejects.toThrow("REDIRECT:/admin?notice=created&entity=sectors");
+      createSectorAction(
+        { status: "error", message: "" },
+        formData({ name: "Action integration sector" }),
+      ),
+    ).resolves.toEqual({ status: "success", message: "Registro criado." });
     const sector = await prisma.sector.findFirstOrThrow({
       where: { name: "Action integration sector" },
     });
 
     await expect(
       updateSectorAction(
+        { status: "error", message: "" },
         formData({ id: sector.id, name: "Updated action integration sector" }),
       ),
-    ).rejects.toThrow("REDIRECT:/admin?notice=updated&entity=sectors");
+    ).resolves.toEqual({
+      status: "success",
+      message: "Alterações salvas.",
+    });
     await expect(
       prisma.sector.findUniqueOrThrow({ where: { id: sector.id } }),
     ).resolves.toMatchObject({ name: "Updated action integration sector" });
@@ -69,8 +76,14 @@ describe("administrative Server Action integration", () => {
     );
 
     await expect(
-      createSectorAction(formData({ name: "Denied action sector" })),
-    ).rejects.toThrow("REDIRECT:/admin?error=access&entity=sectors");
+      createSectorAction(
+        { status: "error", message: "" },
+        formData({ name: "Denied action sector" }),
+      ),
+    ).resolves.toEqual({
+      status: "error",
+      message: "Sua sessão não tem permissão para essa operação.",
+    });
     await expect(
       prisma.sector.count({ where: { name: "Denied action sector" } }),
     ).resolves.toBe(0);

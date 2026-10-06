@@ -48,6 +48,7 @@ vi.mock("next/navigation", () => nextNavigation);
 vi.mock("next/cache", () => nextCache);
 
 import {
+  type AdminUpdateState,
   createCategoryAction,
   createSectorAction,
   createServiceAction,
@@ -72,6 +73,22 @@ async function expectRedirect(action: Promise<never>, path: string): Promise<voi
   await expect(action).rejects.toThrow(`REDIRECT:${path}`);
 }
 
+async function expectUpdate(
+  action: Promise<AdminUpdateState>,
+  status: AdminUpdateState["status"],
+  message: string,
+): Promise<void> {
+  await expect(action).resolves.toEqual({ status, message });
+}
+
+async function expectCreate(
+  action: Promise<AdminUpdateState>,
+  status: AdminUpdateState["status"],
+  message: string,
+): Promise<void> {
+  await expect(action).resolves.toEqual({ status, message });
+}
+
 describe("administrative Server Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,16 +96,19 @@ describe("administrative Server Actions", () => {
   });
 
   it("routes create forms through the protected domain operations", async () => {
-    await expectRedirect(
-      createSectorAction(formData({ name: "Operations" })),
-      "/admin?notice=created&entity=sectors",
+    await expectCreate(
+      createSectorAction({ status: "error", message: "" }, formData({ name: "Operations" })),
+      "success",
+      "Registro criado.",
     );
-    await expectRedirect(
-      createCategoryAction(formData({ name: "General" })),
-      "/admin?notice=created&entity=categories",
+    await expectCreate(
+      createCategoryAction({ status: "error", message: "" }, formData({ name: "General" })),
+      "success",
+      "Registro criado.",
     );
-    await expectRedirect(
+    await expectCreate(
       createUserAction(
+        { status: "error", message: "" },
         formData({
           name: "Requester",
           email: "person@example.test",
@@ -97,10 +117,12 @@ describe("administrative Server Actions", () => {
           sectorId: "",
         }),
       ),
-      "/admin?notice=created&entity=users",
+      "success",
+      "Registro criado.",
     );
-    await expectRedirect(
+    await expectCreate(
       createServiceAction(
+        { status: "error", message: "" },
         formData({
           name: "Support",
           description: "Service description",
@@ -108,7 +130,8 @@ describe("administrative Server Actions", () => {
           sectorId: "sector-id",
         }),
       ),
-      "/admin?notice=created&entity=services",
+      "success",
+      "Registro criado.",
     );
 
     expect(domain.createSector).toHaveBeenCalledWith({ name: "Operations" });
@@ -130,24 +153,33 @@ describe("administrative Server Actions", () => {
   });
 
   it("routes edit and activation forms to the corresponding domain operations", async () => {
-    await expectRedirect(
-      updateSectorAction(formData({ id: "sector", name: "New name" })),
-      "/admin?notice=updated&entity=sectors",
+    await expectUpdate(
+      updateSectorAction(
+        { status: "error", message: "" },
+        formData({ id: "sector", name: "New name" }),
+      ),
+      "success",
+      "Alterações salvas.",
     );
     await expectRedirect(
       toggleSectorAction(formData({ id: "sector", isActive: "false" })),
       "/admin?notice=status&entity=sectors",
     );
-    await expectRedirect(
-      updateCategoryAction(formData({ id: "category", name: "New category" })),
-      "/admin?notice=updated&entity=categories",
+    await expectUpdate(
+      updateCategoryAction(
+        { status: "error", message: "" },
+        formData({ id: "category", name: "New category" }),
+      ),
+      "success",
+      "Alterações salvas.",
     );
     await expectRedirect(
       toggleCategoryAction(formData({ id: "category", isActive: "true" })),
       "/admin?notice=status&entity=categories",
     );
-    await expectRedirect(
+    await expectUpdate(
       updateUserAction(
+        { status: "error", message: "" },
         formData({
           id: "user",
           name: "Attendant",
@@ -157,14 +189,16 @@ describe("administrative Server Actions", () => {
           sectorId: "sector",
         }),
       ),
-      "/admin?notice=updated&entity=users",
+      "success",
+      "Alterações salvas.",
     );
     await expectRedirect(
       toggleUserAction(formData({ id: "user", isActive: "false" })),
       "/admin?notice=status&entity=users",
     );
-    await expectRedirect(
+    await expectUpdate(
       updateServiceAction(
+        { status: "error", message: "" },
         formData({
           id: "service",
           name: "New service",
@@ -173,7 +207,8 @@ describe("administrative Server Actions", () => {
           sectorId: "sector",
         }),
       ),
-      "/admin?notice=updated&entity=services",
+      "success",
+      "Alterações salvas.",
     );
     await expectRedirect(
       toggleServiceAction(formData({ id: "service", isActive: "false" })),
@@ -199,13 +234,36 @@ describe("administrative Server Actions", () => {
       sectorId: "sector",
     });
     expect(domain.setServiceActive).toHaveBeenCalledWith("service", false);
+    expect(nextCache.revalidatePath).toHaveBeenCalledTimes(8);
+  });
+
+  it("returns a safe error state when a domain update is rejected", async () => {
+    domain.updateUser.mockRejectedValueOnce(new ConflictError());
+
+    await expectUpdate(
+      updateUserAction(
+        { status: "error", message: "" },
+        formData({
+          id: "user",
+          name: "Attendant",
+          email: "attendant@example.test",
+          password: "",
+          role: "ATTENDANT",
+          sectorId: "sector",
+        }),
+      ),
+      "error",
+      "A alteração conflita com as dependências ou solicitações existentes.",
+    );
+    expect(nextCache.revalidatePath).not.toHaveBeenCalled();
   });
 
   it("returns safe, understandable form states for validation and dependency errors", async () => {
     domain.createSector.mockRejectedValueOnce(new ValidationError([]));
-    await expectRedirect(
-      createSectorAction(formData({ name: "" })),
-      "/admin?error=validation&entity=sectors",
+    await expectCreate(
+      createSectorAction({ status: "error", message: "" }, formData({ name: "" })),
+      "error",
+      "Confira os campos: há valores ausentes ou inválidos.",
     );
 
     domain.setCategoryActive.mockRejectedValueOnce(new ConflictError());
@@ -217,8 +275,9 @@ describe("administrative Server Actions", () => {
     domain.createService.mockRejectedValueOnce(
       new Error("sensitive database details"),
     );
-    await expect(
+    await expectCreate(
       createServiceAction(
+        { status: "error", message: "" },
         formData({
           name: "Service",
           description: "Details",
@@ -226,9 +285,8 @@ describe("administrative Server Actions", () => {
           sectorId: "sector",
         }),
       ),
-    ).rejects.toThrow("sensitive database details");
-    expect(nextNavigation.redirect).not.toHaveBeenCalledWith(
-      expect.stringContaining("sensitive database details"),
+      "error",
+      "Não foi possível criar o registro. Tente novamente.",
     );
   });
 });

@@ -50,9 +50,9 @@ async function createUser(
   await form.getByRole("button", { name: "Criar usuário" }).click();
   await expect(page.getByRole("status")).toHaveText("Registro criado.");
   await expect(
-    page
-      .getByRole("region", { name: "Usuários" })
-      .locator(`ul input[name="email"][value="${input.email}"]`),
+    page.getByRole("region", { name: "Usuários" }).locator("ul").getByText(input.email, {
+      exact: true,
+    }),
   ).toBeVisible();
 }
 
@@ -68,9 +68,9 @@ async function createService(
   await form.getByRole("button", { name: "Criar serviço" }).click();
   await expect(page.getByRole("status")).toHaveText("Registro criado.");
   await expect(
-    page
-      .getByRole("region", { name: "Serviços" })
-      .locator(`ul input[name="name"][value="${input.name}"]`),
+    page.getByRole("region", { name: "Serviços" }).locator("ul").getByText(input.name, {
+      exact: true,
+    }),
   ).toBeVisible();
 }
 
@@ -116,6 +116,20 @@ test("bootstraps login, configures services, handles requests and denies cross-s
     email: requesterAEmail,
     role: "REQUESTER",
   });
+  const userSection = page.getByRole("region", { name: "Usuários" });
+  const requesterRow = userSection.locator("ul > li").filter({
+    hasText: requesterAEmail,
+  });
+  await requesterRow.getByRole("button", { name: "Editar" }).click();
+  await requesterRow.locator('[name="name"]').fill("Temporary requester name");
+  await requesterRow.getByRole("button", { name: "Cancelar" }).click();
+  await expect(requesterRow.getByText("E2E requester A", { exact: true })).toBeVisible();
+  await requesterRow.getByRole("button", { name: "Editar" }).click();
+  await requesterRow.locator('[name="name"]').fill("Updated requester name");
+  await requesterRow.getByRole("button", { name: "Salvar" }).click();
+  await expect(requesterRow.getByText("Updated requester name", { exact: true })).toBeVisible();
+  await expect(requesterRow.getByRole("status")).toHaveText("Alterações salvas.");
+
   await createUser(page, {
     name: "E2E requester B",
     email: requesterBEmail,

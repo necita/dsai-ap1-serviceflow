@@ -8,6 +8,8 @@ import { requireConfigurationAdministrator } from "@/server/authorization";
 import { listSectors } from "@/modules/sectors";
 import { listServices } from "@/modules/services";
 import { listUsers } from "@/modules/users";
+import { AdminCreateForm } from "./create-form";
+import { AdminRecordEditor } from "./record-editor";
 import {
   createCategoryAction,
   createSectorAction,
@@ -101,39 +103,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <p className="section-description">Organize as equipes responsáveis pelo atendimento.</p>
           </div>
         </div>
-        <form action={createSectorAction} className="create-form">
+        <AdminCreateForm action={createSectorAction} submitLabel="Criar setor">
           <label>
             Novo setor
             <input name="name" required maxLength={200} />
           </label>
-          <button type="submit">Criar setor</button>
-        </form>
+        </AdminCreateForm>
         <ul className="entity-list">
           {sectors.map((sector) => (
-            <li className="entity-item" key={sector.id}>
-              <form action={updateSectorAction} className="entity-form">
-                <input type="hidden" name="id" value={sector.id} />
-                <label>
-                  Nome
-                  <input name="name" defaultValue={sector.name} required />
-                </label>
-                <span className={`status-badge${sector.isActive ? "" : " is-inactive"}`}>
-                  {sector.isActive ? "Ativo" : "Inativo"}
-                </span>
-                <button className="button-secondary" type="submit">Salvar</button>
-              </form>
-              <form action={toggleSectorAction} className="entity-actions">
-                <input type="hidden" name="id" value={sector.id} />
-                <input
-                  type="hidden"
-                  name="isActive"
-                  value={String(!sector.isActive)}
-                />
-                <button className={sector.isActive ? "button-danger" : "button-secondary"} type="submit">
-                  {sector.isActive ? "Desativar" : "Reativar"}
-                </button>
-              </form>
-            </li>
+            <AdminRecordEditor
+              key={sector.id}
+              record={{ kind: "sector", ...sector }}
+              toggleAction={toggleSectorAction}
+              updateAction={updateSectorAction}
+            />
           ))}
         </ul>
       </section>
@@ -146,39 +129,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <p className="section-description">Agrupe serviços em categorias fáceis de encontrar.</p>
           </div>
         </div>
-        <form action={createCategoryAction} className="create-form">
+        <AdminCreateForm action={createCategoryAction} submitLabel="Criar categoria">
           <label>
             Nova categoria
             <input name="name" required maxLength={200} />
           </label>
-          <button type="submit">Criar categoria</button>
-        </form>
+        </AdminCreateForm>
         <ul className="entity-list">
           {categories.map((category) => (
-            <li className="entity-item" key={category.id}>
-              <form action={updateCategoryAction} className="entity-form">
-                <input type="hidden" name="id" value={category.id} />
-                <label>
-                  Nome
-                  <input name="name" defaultValue={category.name} required />
-                </label>
-                <span className={`status-badge${category.isActive ? "" : " is-inactive"}`}>
-                  {category.isActive ? "Ativa" : "Inativa"}
-                </span>
-                <button className="button-secondary" type="submit">Salvar</button>
-              </form>
-              <form action={toggleCategoryAction} className="entity-actions">
-                <input type="hidden" name="id" value={category.id} />
-                <input
-                  type="hidden"
-                  name="isActive"
-                  value={String(!category.isActive)}
-                />
-                <button className={category.isActive ? "button-danger" : "button-secondary"} type="submit">
-                  {category.isActive ? "Desativar" : "Reativar"}
-                </button>
-              </form>
-            </li>
+            <AdminRecordEditor
+              key={category.id}
+              record={{ kind: "category", ...category }}
+              toggleAction={toggleCategoryAction}
+              updateAction={updateCategoryAction}
+            />
           ))}
         </ul>
       </section>
@@ -191,7 +155,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <p className="section-description">Gerencie perfis, acessos e a associação de atendentes aos setores.</p>
           </div>
         </div>
-        <form action={createUserAction} className="create-form">
+        <AdminCreateForm action={createUserAction} submitLabel="Criar usuário">
           <label>Nome<input name="name" required /></label>
           <label>E-mail<input name="email" type="email" required /></label>
           <label>Senha inicial<input name="password" type="password" required /></label>
@@ -213,53 +177,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <option key={sector.id} value={sector.id}>{sector.name}</option>
                 ))}
             </select>
-          </label>
-          <button type="submit">Criar usuário</button>
-        </form>
+            </label>
+        </AdminCreateForm>
         <ul className="entity-list">
           {users.map((user) => (
-            <li className="entity-item" key={user.id}>
-              <form action={updateUserAction} className="entity-form">
-                <input type="hidden" name="id" value={user.id} />
-                <label>Nome<input name="name" defaultValue={user.name} required /></label>
-                <label>E-mail<input name="email" type="email" defaultValue={user.email} required /></label>
-                <label>Nova senha (opcional)<input name="password" type="password" /></label>
-                <label>
-                  Perfil
-                  <select name="role" defaultValue={user.role} required>
-                    <option value="ADMIN">Administrador</option>
-                    <option value="REQUESTER">Solicitante</option>
-                    <option value="ATTENDANT">Atendente</option>
-                  </select>
-                </label>
-                <label>
-                  Setor da equipe
-                  <select name="sectorId" defaultValue={user.sectorId ?? ""}>
-                    <option value="">Selecione se for atendente</option>
-                    {sectors.map((sector) => (
-                      <option key={sector.id} value={sector.id}>
-                        {sector.name}{sector.isActive ? "" : " (inativo)"}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <span className={`status-badge${user.isActive ? "" : " is-inactive"}`}>
-                  {user.isActive ? "Ativo" : "Inativo"}
-                </span>
-                <button className="button-secondary" type="submit">Salvar usuário</button>
-              </form>
-              <form action={toggleUserAction} className="entity-actions">
-                <input type="hidden" name="id" value={user.id} />
-                <input
-                  type="hidden"
-                  name="isActive"
-                  value={String(!user.isActive)}
-                />
-                <button className={user.isActive ? "button-danger" : "button-secondary"} type="submit">
-                  {user.isActive ? "Desativar usuário" : "Reativar usuário"}
-                </button>
-              </form>
-            </li>
+            <AdminRecordEditor
+              key={user.id}
+              record={{ kind: "user", ...user }}
+              sectors={sectors}
+              toggleAction={toggleUserAction}
+              updateAction={updateUserAction}
+            />
           ))}
         </ul>
       </section>
@@ -272,7 +200,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <p className="section-description">Configure o que as pessoas podem solicitar e qual equipe atende.</p>
           </div>
         </div>
-        <form action={createServiceAction} className="create-form">
+        <AdminCreateForm action={createServiceAction} submitLabel="Criar serviço">
           <label>Nome<input name="name" required /></label>
           <label className="wide-field">Descrição<textarea name="description" required /></label>
           <label>
@@ -293,52 +221,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               ))}
             </select>
           </label>
-          <button type="submit">Criar serviço</button>
-        </form>
+        </AdminCreateForm>
         <ul className="entity-list">
           {services.map((service) => (
-            <li className="entity-item" key={service.id}>
-              <form action={updateServiceAction} className="entity-form">
-                <input type="hidden" name="id" value={service.id} />
-                <label>Nome<input name="name" defaultValue={service.name} required /></label>
-                <label className="wide-field">Descrição<textarea name="description" defaultValue={service.description} required /></label>
-                <label>
-                  Categoria
-                  <select name="categoryId" defaultValue={service.categoryId} required>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}{category.isActive ? "" : " (inativa)"}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Setor
-                  <select name="sectorId" defaultValue={service.sectorId} required>
-                    {sectors.map((sector) => (
-                      <option key={sector.id} value={sector.id}>
-                        {sector.name}{sector.isActive ? "" : " (inativo)"}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <span className={`status-badge${service.isActive ? "" : " is-inactive"}`}>
-                  {service.isActive ? "Ativo" : "Inativo"}
-                </span>
-                <button className="button-secondary" type="submit">Salvar serviço</button>
-              </form>
-              <form action={toggleServiceAction} className="entity-actions">
-                <input type="hidden" name="id" value={service.id} />
-                <input
-                  type="hidden"
-                  name="isActive"
-                  value={String(!service.isActive)}
-                />
-                <button className={service.isActive ? "button-danger" : "button-secondary"} type="submit">
-                  {service.isActive ? "Desativar serviço" : "Reativar serviço"}
-                </button>
-              </form>
-            </li>
+            <AdminRecordEditor
+              key={service.id}
+              record={{
+                kind: "service",
+                id: service.id,
+                name: service.name,
+                description: service.description,
+                categoryId: service.categoryId,
+                sectorId: service.sectorId,
+                isActive: service.isActive,
+              }}
+              categories={categories}
+              sectors={sectors}
+              toggleAction={toggleServiceAction}
+              updateAction={updateServiceAction}
+            />
           ))}
         </ul>
       </section>
